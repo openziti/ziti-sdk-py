@@ -1,0 +1,2 @@
+include versioneer.py
+include ziti/_version_src.py
