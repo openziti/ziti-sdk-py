@@ -13,12 +13,10 @@
 #  limitations under the License.
 
 import ctypes
-import encodings
 import os
 from typing import Tuple
 
 _mod_path = os.path.dirname(__file__)
-print (_mod_path)
 ziti = ctypes.CDLL(_mod_path + '/libziti.so')
 
 

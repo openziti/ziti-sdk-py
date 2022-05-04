@@ -39,7 +39,6 @@ _patch_methods = dict(
 
 class monkeypatch(object):
     def __init__(self):
-        print('setting ziti overrides')
         self.orig_socket = socket.socket
         socket.socket = zitisock.ZitiSocket
         self.orig_methods = dict((m, socket.__dict__[m]) for m in _patch_methods)
