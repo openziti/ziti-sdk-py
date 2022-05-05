@@ -29,9 +29,9 @@ jobs:
           python tools/get_zitilib.py
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v2.4.0
-        env:
-          CIBW_BUILD: ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+        run: |
+          set -x
+          python setup.py bdist_wheel -d ./wheelhouse
 
       - uses: actions/upload-artifact@v3
         with:
