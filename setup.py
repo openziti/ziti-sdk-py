@@ -14,10 +14,11 @@
 
 import setuptools
 from setuptools import setup
+import versioneer
 
 setup(
     name='openziti',
-    version='0.1.0',
+    version=versioneer.get_version(),
     description='Ziti Python SDK',
     url='https://github.com/openziti/ziti-sdk-py',
     author='Eugene Kobyakov',

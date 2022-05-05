@@ -51,3 +51,6 @@ class monkeypatch(object):
     def __exit__(self, exc_type, exc_val, exc_tb):
         for m in self.orig_methods:
             socket.__dict__[m] = self.orig_methods[m]
+
+from . import _version_src
+__version__ = _version_src.get_versions()['version']
