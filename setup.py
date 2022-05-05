@@ -43,6 +43,10 @@ setup(
     package_data={
         "ziti": ["lib/*"],
     },
+    ext_modules=[
+        # make sure it is platform specific
+        setuptools.Extension("zitilib", [])
+    ],
 
     classifiers=[
         'Development Status :: 1 - Planning',
