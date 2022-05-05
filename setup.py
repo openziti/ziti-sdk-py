@@ -16,11 +16,24 @@ import setuptools
 from setuptools import setup
 import versioneer
 
+# read the contents of your README file
+from pathlib import Path
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
+
 setup(
     name='openziti',
     version=versioneer.get_version(),
     description='Ziti Python SDK',
+    long_description=long_description,
+    long_description_content_type='text/markdown',
     url='https://github.com/openziti/ziti-sdk-py',
+    project_urls={
+    'Documentation': 'https://openziti.github.io/ziti/overview.html',
+    'Source': 'https://github.com/openziti/ziti-sdk-py',
+    'Tracker': 'https://github.com/openziti/ziti-sdk-py/issues',
+    'Discussion': 'https://openziti.discourse.group/',
+    },
     author='Eugene Kobyakov',
     author_email='eugene@openziti.org',
     license='Apache 2.0',
@@ -28,7 +41,7 @@ setup(
     install_requires=[],
     include_package_data=True,
     package_data={
-        "": ["libziti.so"],
+        "ziti": ["lib/*"],
     },
     ext_modules=[
         setuptools.Extension("zitilib", [])

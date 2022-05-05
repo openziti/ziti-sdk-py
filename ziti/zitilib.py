@@ -14,10 +14,22 @@
 
 import ctypes
 import os
+import sysconfig
 from typing import Tuple
 
 _mod_path = os.path.dirname(__file__)
-ziti = ctypes.CDLL(_mod_path + '/libziti.so')
+libname = None
+osname, _ = sysconfig.get_platform().split('-')
+if osname == 'linux':
+    libname = 'libziti.so'
+elif osname == 'darwin':
+    libname = 'libziti.dylib'
+elif osname == 'windows':
+    libname = 'ziti.dll'
+else:
+    raise ImportError("could not load ziti shared library")
+
+ziti = ctypes.CDLL(_mod_path + f'/lib/{libname}')
 
 
 class _Ver(ctypes.Structure):
