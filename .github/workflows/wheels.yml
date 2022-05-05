@@ -31,7 +31,7 @@ jobs:
       - name: Build wheels
         run: |
           set -x
-          python setup.py bdist_wheel -d ./wheelhouse
+          pip wheel . -w ./wheelhouse
 
       - uses: actions/upload-artifact@v3
         with:
