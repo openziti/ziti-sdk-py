@@ -12,6 +12,8 @@ jobs:
           - [ubuntu-20.04, manylinux_2_27_x86_64]
     name: building ${{ matrix.buildplat[1] }}
     runs-on: ${{ matrix.buildplat[0] }}
+    env:
+      HAVE_TEST_ID: ${{ secrets.ZITI_TEST_IDENTITY != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -30,6 +32,15 @@ jobs:
         run: |
           set -x
           python tools/get_zitilib.py
+
+      - name: Run Integration Tests
+        if: ${{ env.HAVE_TEXT_ID == 'true' }}
+        env:
+          ZITI_TEST_IDENTITY: ${{ secrets.ZITI_TEST_IDENTITY }}
+          ZITI_IDENTITIES: id.json
+        run: |
+          echo "${ZITI_TEST_IDENTITY}" > "${ZITI_IDENTITIES}"
+          python -m unittest tests/ziti_tests.py
 
       - name: Build wheels
         run: |
