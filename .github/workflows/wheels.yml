@@ -34,7 +34,7 @@ jobs:
           python tools/get_zitilib.py
 
       - name: Run Integration Tests
-        if: ${{ env.HAVE_TEXT_ID == 'true' }}
+        if: ${{ env.HAVE_TEST_ID == 'true' }}
         env:
           ZITI_TEST_IDENTITY: ${{ secrets.ZITI_TEST_IDENTITY }}
           ZITI_IDENTITIES: id.json
