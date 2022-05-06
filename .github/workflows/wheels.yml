@@ -35,7 +35,7 @@ jobs:
         run: |
           pip wheel . -w ./wheelhouse
           auditwheel show ./wheelhouse/*
-          auditwheel repair --plat=${{ matrix.buildplat[1] }}
+          auditwheel repair --plat=${{ matrix.buildplat[1] }} ./wheelhouse/*
 
       - uses: actions/upload-artifact@v3
         with:
