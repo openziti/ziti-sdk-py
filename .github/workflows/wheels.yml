@@ -8,10 +8,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python: ["cp38"]
         buildplat:
           - [ubuntu-20.04, manylinux_2_27_x86_64]
-    name: building ${{ matrix.python }}-${{ matrix.buildplat[1] }}
+    name: building ${{ matrix.buildplat[1] }}
     runs-on: ${{ matrix.buildplat[0] }}
     steps:
       - name: Checkout
@@ -19,7 +18,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      # Used to push the built wheels
       - name: Setup Python
         uses: actions/setup-python@v3
         with:
@@ -43,7 +41,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.python }}-${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
+          name: ${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
           path: ./wheelhouse/*.whl
-
-
