@@ -33,7 +33,9 @@ jobs:
 
       - name: Build wheels
         run: |
+          set -x
           pip wheel . -w ./wheelhouse
+          ls -l ./wheelhouse
           auditwheel show ./wheelhouse/*
           auditwheel repair --plat=${{ matrix.buildplat[1] }} ./wheelhouse/*
 
