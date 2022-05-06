@@ -40,6 +40,7 @@ jobs:
           ZITI_IDENTITIES: id.json
         run: |
           echo "${ZITI_TEST_IDENTITY}" > "${ZITI_IDENTITIES}"
+          pip install -r tests/requirements.txt
           python -m unittest tests/ziti_tests.py
 
       - name: Build wheels
