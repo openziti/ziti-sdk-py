@@ -1,0 +1,45 @@
+name: build wheels
+on:
+  push:
+  pull_request:
+
+jobs:
+  build_wheels:
+    strategy:
+      fail-fast: false
+      matrix:
+        buildplat:
+          - [ubuntu-20.04, manylinux_2_27_x86_64]
+    name: building ${{ matrix.buildplat[1] }}
+    runs-on: ${{ matrix.buildplat[0] }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Setup Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: '3.x'
+
+      - name: Install Python Tools
+        run: python -m pip install -U pip setuptools wheel auditwheel
+
+      - name: Get Ziti SDK C
+        run: |
+          set -x
+          python tools/get_zitilib.py
+
+      - name: Build wheels
+        run: |
+          set -x
+          pip wheel . -w ./wheelhouse
+          ls -l ./wheelhouse
+          auditwheel show ./wheelhouse/*
+          auditwheel repair --plat=${{ matrix.buildplat[1] }} ./wheelhouse/*
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: ${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
+          path: ./wheelhouse/*.whl
