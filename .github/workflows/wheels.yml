@@ -8,10 +8,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        buildplat:
-          - [ubuntu-20.04, manylinux_2_27_x86_64]
-    name: building ${{ matrix.buildplat[1] }}
-    runs-on: ${{ matrix.buildplat[0] }}
+        spec:
+          - { name: 'linux x86_64', runner: ubuntu-20.04, target: manylinux_2_27_x86_64 }
+          - { name: 'macOS x86_64', runner: macos-10.15, target: macosx_10_14_x86_64 }
+    name: building ${{ matrix.spec.name }}
+    runs-on: ${{ matrix.spec.runner }}
     env:
       HAVE_TEST_ID: ${{ secrets.ZITI_TEST_IDENTITY != '' }}
     steps:
@@ -46,13 +47,39 @@ jobs:
 
       - name: Build wheels
         run: |
-          set -x
-          pip wheel . -w ./wheelhouse
-          ls -l ./wheelhouse
+          pip wheel . -w ./wheelhouse --build-option --plat-name=${{ matrix.spec.target }}
+
+      - name: Audit wheel
+        if: startsWith(matrix.spec.name, 'linux')
+        run: |
           auditwheel show ./wheelhouse/*
-          auditwheel repair --plat=${{ matrix.buildplat[1] }} ./wheelhouse/*
+          auditwheel repair --plat=${{ matrix.spec.target }} ./wheelhouse/*
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ startsWith(matrix.buildplat[1], 'macosx') && 'macosx' || matrix.buildplat[1] }}
+          name: ${{ matrix.spec.name }}
           path: ./wheelhouse/*.whl
+
+  publish:
+    runs-on: ubuntu-18.04
+    needs: [ build_wheels ]
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: download
+
+      - name: check
+        run: |
+          ls -lR download
+          mkdir dist
+          cp download/*/* dist
+
+      - name: Publish wheels (TestPYPI)
+        uses: pypa/gh-action-pypi-publish@master
+        with:
+          user: __token__
+          password: ${{ secrets.TEST_PYPI_API_TOKEN }}
+          repository_url: https://test.pypi.org/legacy/
+          packages_dir: dist
+          verbose: true

@@ -19,12 +19,11 @@ from os.path import dirname
 ZITI_SDK_BASE = 'https://github.com/openziti/ziti-sdk-c/releases/download'
 
 
-def download_sdk(plat, version):
+def download_sdk(osname, arch, version):
     from urllib.request import Request
     from urllib.request import urlopen
     from urllib.error import HTTPError
 
-    osname, arch = plat.split('-')
     filename = f'{ZITI_SDK_BASE}/{version}/ziti-sdk-{version}-{osname}-{arch}.zip'
     headers = dict()
     req = Request(url=filename, headers=headers)
@@ -58,9 +57,12 @@ def get_sdk_version():
 
 
 if __name__ == '__main__':
+    import platform
     sdk_version = get_sdk_version()
-    platform = sysconfig.get_platform()
-    osname, arch = platform.split('-')
+    osname = platform.system()
+    arch = platform.machine()
+    print(f'platform={osname}-{arch}')
+
     osname = osname.capitalize()
     libname = None
     if osname == 'Linux':
@@ -70,5 +72,5 @@ if __name__ == '__main__':
     elif osname == 'win64':
         libname = 'ziti.dll'
 
-    d = download_sdk(platform, version=sdk_version)
+    d = download_sdk(osname, arch, version=sdk_version)
     libfile = extract(d, libname)
