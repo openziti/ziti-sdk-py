@@ -48,7 +48,7 @@ def extract(data, libname):
     from io import BytesIO
     import zipfile
     zip = zipfile.ZipFile(BytesIO(data))
-    return zip.extract(member=f'lib/{libname}',path=f'ziti/')
+    return zip.extract(member=f'lib/{libname}',path=f'src/openziti/')
 
 
 if __name__ == '__main__':

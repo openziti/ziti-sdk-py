@@ -14,7 +14,7 @@
 
 import socket
 from typing import Tuple
-from ziti import zitilib
+from src.openziti import zitilib
 
 py_socket = socket.socket
 

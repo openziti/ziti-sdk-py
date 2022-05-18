@@ -1,1 +1,1 @@
-ziti/_version_src.py export-subst
+src/openziti/_version.py export-subst

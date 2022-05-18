@@ -13,7 +13,8 @@
 #  limitations under the License.
 
 import socket
-from ziti import zitilib
+from src.openziti import zitilib
+
 
 class ZitiContext:
     def __init__(self, ctx_p):
