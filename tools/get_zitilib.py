@@ -11,23 +11,21 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import os
-import platform
+
 import sys
 import sysconfig
+from os.path import dirname
 
-ZITI_SDK_VERSION = '0.28.1'
-# https://github.com/openziti/ziti-sdk-c/releases/download/0.28.1/ziti-sdk-0.28.1-Darwin.zip
 ZITI_SDK_BASE = 'https://github.com/openziti/ziti-sdk-c/releases/download'
 
 
-def download_sdk(plat, version = ZITI_SDK_VERSION):
+def download_sdk(plat, version):
     from urllib.request import Request
     from urllib.request import urlopen
     from urllib.error import HTTPError
 
     osname, arch = plat.split('-')
-    filename = f'{ZITI_SDK_BASE}/{version}/ziti-sdk-{version}-{osname}.zip'
+    filename = f'{ZITI_SDK_BASE}/{version}/ziti-sdk-{version}-{osname}-{arch}.zip'
     headers = dict()
     req = Request(url=filename, headers=headers)
     try:
@@ -51,13 +49,19 @@ def extract(data, libname):
     return zip.extract(member=f'lib/{libname}',path=f'src/openziti/')
 
 
+def get_sdk_version():
+    from configparser import ConfigParser
+    cfgfile = f'{dirname(__file__)}/../setup.cfg'
+    parser = ConfigParser()
+    parser.read(cfgfile)
+    return dict(parser.items('openziti'))['ziti_sdk_version']
+
+
 if __name__ == '__main__':
-    platform.platform()
-    plat = sysconfig.get_platform()
-    osname, arch = plat.split('-')
+    sdk_version = get_sdk_version()
+    platform = sysconfig.get_platform()
+    osname, arch = platform.split('-')
     osname = osname.capitalize()
-    print(osname)
-    print(arch)
     libname = None
     if osname == 'Linux':
         libname = 'libziti.so'
@@ -66,5 +70,5 @@ if __name__ == '__main__':
     elif osname == 'win64':
         libname = 'ziti.dll'
 
-    d = download_sdk(plat)
+    d = download_sdk(platform, version=sdk_version)
     libfile = extract(d, libname)
