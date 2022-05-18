@@ -22,37 +22,12 @@ this_directory = Path(__file__).parent
 long_description = (this_directory / "README.md").read_text()
 
 setup(
-    name='openziti',
     version=versioneer.get_version(),
-    description='Ziti Python SDK',
-    long_description=long_description,
-    long_description_content_type='text/markdown',
-    url='https://github.com/openziti/ziti-sdk-py',
-    project_urls={
-    'Documentation': 'https://openziti.github.io/ziti/overview.html',
-    'Source': 'https://github.com/openziti/ziti-sdk-py',
-    'Tracker': 'https://github.com/openziti/ziti-sdk-py/issues',
-    'Discussion': 'https://openziti.discourse.group/',
-    },
-    author='Eugene Kobyakov',
-    author_email='eugene@openziti.org',
-    license='Apache 2.0',
-    packages=['ziti'],
-    install_requires=[],
+    cmdclass=versioneer.get_cmdclass(),
+
+    packages=['openziti'],
     include_package_data=True,
     package_data={
-        "ziti": ["lib/*"],
+        "openziti": ["lib/*"],
     },
-
-    classifiers=[
-        'Development Status :: 1 - Planning',
-        'Intended Audience :: Developers',
-        'License :: OSI Approved :: Apache Software License',
-        'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 2',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.4',
-        'Programming Language :: Python :: 3.5',
-    ],
 )
