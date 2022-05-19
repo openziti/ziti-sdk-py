@@ -13,7 +13,7 @@
 #  limitations under the License.
 
 import socket
-from src.openziti import zitilib
+from . import zitilib
 
 
 class ZitiContext:
