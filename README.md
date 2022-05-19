@@ -9,7 +9,6 @@ Ziti SDK for Python
 
 # Getting Help
 
-------------
 Please use these community resources for getting help. We use GitHub [issues](https://github.com/NetFoundry/ziti-sdk-py/issues) 
 for tracking bugs and feature requests and have limited bandwidth to address them.
 

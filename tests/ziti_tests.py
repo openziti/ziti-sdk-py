@@ -29,12 +29,13 @@ class TestZitiModule(unittest.TestCase):
             get_httpbin('http://httpbin.ziti/json')
 
         with openziti.monkeypatch():
+            from json import dumps
             r = get_httpbin('http://httpbin.ziti/anything')
             assert r.status_code == 200
-            json = r.json()
-            self.assertRegex(json['headers']['User-Agent'], r'python-requests/.*')
+            body = r.json()
+            print(dumps(body, indent=2))
+            self.assertRegex(body['headers']['User-Agent'], r'python-requests/.*')
 
         with self.assertRaises(ConnectionError):
             get_httpbin('http://httpbin.ziti/json')
-
 

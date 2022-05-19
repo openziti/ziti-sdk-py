@@ -14,12 +14,12 @@
 
 import ctypes
 import os
-import sysconfig
+import platform
 from typing import Tuple
 
 _mod_path = os.path.dirname(__file__)
 libname = None
-osname, _ = sysconfig.get_platform().split('-')
+osname = platform.system().lower()
 if osname == 'linux':
     libname = 'libziti.so'
 elif osname == 'darwin':
