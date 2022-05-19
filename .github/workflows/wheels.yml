@@ -41,6 +41,7 @@ jobs:
         run: |
           echo "${ZITI_TEST_IDENTITY}" > "${ZITI_IDENTITIES}"
           pip install -r tests/requirements.txt
+          pip install .
           python -m unittest tests/ziti_tests.py
 
       - name: Build wheels

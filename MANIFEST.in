@@ -1,2 +1,2 @@
 include versioneer.py
-include ziti/_version_src.py
+include src/openziti/_version.py

@@ -12,13 +12,15 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import os.path
-from ziti import zitilib
-from ziti import context
-from ziti import zitisock
 import socket
+from os import getenv
+from . import zitilib, context, zitisock
 
-_ziti_identities = (os.getenv('ZITI_IDENTITIES') or "").split(';')
+
+_ziti_identities = filter(lambda p: p != '',
+                          map(lambda s: s.strip(),
+                              (getenv('ZITI_IDENTITIES') or "").split(';')))
+
 _id_map = dict()
 
 zitilib.init()
@@ -52,5 +54,7 @@ class monkeypatch(object):
         for m in self.orig_methods:
             socket.__dict__[m] = self.orig_methods[m]
 
-from . import _version_src
-__version__ = _version_src.get_versions()['version']
+
+from . import _version
+__version__ = _version.get_versions()['version']
+del _version

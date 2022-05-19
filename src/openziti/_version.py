@@ -42,10 +42,10 @@ def get_config():
     # _version.py
     cfg = VersioneerConfig()
     cfg.VCS = "git"
-    cfg.style = "pep440"
-    cfg.tag_prefix = ""
+    cfg.style = "pep440-pre"
+    cfg.tag_prefix = "v"
     cfg.parentdir_prefix = "openziti-"
-    cfg.versionfile_source = "ziti/_version_src.py"
+    cfg.versionfile_source = "src/openziti/_version.py"
     cfg.verbose = False
     return cfg
 

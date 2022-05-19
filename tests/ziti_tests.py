@@ -13,10 +13,9 @@
 #  limitations under the License.
 import os
 import unittest
-import ziti
+import openziti
 import requests
 from requests.exceptions import ConnectionError
-
 
 def get_httpbin(url):
     return requests.get(url)
@@ -29,7 +28,7 @@ class TestZitiModule(unittest.TestCase):
         with self.assertRaises(ConnectionError):
             get_httpbin('http://httpbin.ziti/json')
 
-        with ziti.monkeypatch():
+        with openziti.monkeypatch():
             r = get_httpbin('http://httpbin.ziti/anything')
             assert r.status_code == 200
             json = r.json()
