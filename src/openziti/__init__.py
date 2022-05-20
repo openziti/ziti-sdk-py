@@ -1,4 +1,4 @@
-#  Copyright (c) 2022.  NetFoundry, Inc.
+#  Copyright (c)  NetFoundry Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import socket
+import socket as sock
 from os import getenv
 from . import zitilib, context, zitisock
 
@@ -28,6 +28,7 @@ zitilib.init()
 version = zitilib.version
 shutdown = zitilib.shutdown
 load = context.load_identity
+socket = zitisock.ZitiSocket
 
 for id in _ziti_identities:
     if id != '':
@@ -41,18 +42,18 @@ _patch_methods = dict(
 
 class monkeypatch(object):
     def __init__(self):
-        self.orig_socket = socket.socket
-        socket.socket = zitisock.ZitiSocket
-        self.orig_methods = dict((m, socket.__dict__[m]) for m in _patch_methods)
+        self.orig_socket = sock.socket
+        sock.socket = zitisock.ZitiSocket
+        self.orig_methods = dict((m, sock.__dict__[m]) for m in _patch_methods)
         for m in _patch_methods:
-            socket.__dict__[m] = _patch_methods[m]
+            sock.__dict__[m] = _patch_methods[m]
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         for m in self.orig_methods:
-            socket.__dict__[m] = self.orig_methods[m]
+            sock.__dict__[m] = self.orig_methods[m]
 
 
 from . import _version

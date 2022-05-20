@@ -13,13 +13,13 @@
 #  limitations under the License.
 
 import socket
+from socket import socket as py_socket
 from typing import Tuple
 from . import zitilib
 
-py_socket = socket.socket
 
 class ZitiSocket(py_socket):
-    def __init__(self, af = -1, type = -1, proto = -1, fileno = None):
+    def __init__(self, af=-1, type=-1, proto=-1, fileno=None):
         self._ziti_af = af
         self._ziti_type = type
         self._ziti_proto = proto
@@ -42,7 +42,7 @@ class ZitiSocket(py_socket):
                 py_socket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
                 py_socket.connect(self, addr)
 
-    def setsockopt(self, __level: int, __optname: int, __value: int | bytes) -> None:
+    def setsockopt(self, __level, __optname, __value) -> None:
         try:
             py_socket.setsockopt(self, __level, __optname, __value)
         except:
@@ -50,8 +50,8 @@ class ZitiSocket(py_socket):
 
 
 def create_ziti_connection(address,
-                      timeout= socket._GLOBAL_DEFAULT_TIMEOUT,
-                      source_address=None):
+                           timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
+                           source_address=None):
     s = ZitiSocket(socket.SOCK_STREAM)
     s.connect(address)
     return s
@@ -62,7 +62,7 @@ def ziti_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
     addr = (
         socket._intenum_converter(socket.AF_INET, socket.AddressFamily),
         socket._intenum_converter(type, socket.SocketKind),
-        proto, '', (host,port))
+        proto, '', (host, port))
 
     addrlist.append(addr)
     return addrlist
