@@ -3,8 +3,20 @@ Ziti SDK for Python
 
 # Installation
 
+Ziti SDK for Python is distributed via Python Package Index(PyPI)
+
+```shell
+$ pip install openziti
+```
 
 # Usage
+
+## Identity Enrollment
+
+Acquire [Ziti Enrollment Token](https://openziti.github.io/ziti/identities/overview.html) 
+```shell
+$ python -m openziti enroll -j <JWT file> -i <ID JSON file>
+```
 
 
 # Getting Help

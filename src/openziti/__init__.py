@@ -25,6 +25,7 @@ _id_map = dict()
 
 zitilib.init()
 
+enroll = zitilib.enroll
 version = zitilib.version
 shutdown = zitilib.shutdown
 load = context.load_identity
