@@ -42,6 +42,10 @@ class _Ver(ctypes.Structure):
 _ziti_version = ziti.ziti_get_version
 _ziti_version.restype = ctypes.POINTER(_Ver)
 
+_ziti_errorstr = ziti.ziti_errorstr
+_ziti_errorstr.argtypes = [ctypes.c_int]
+_ziti_errorstr.restype = ctypes.c_char_p
+
 _load_ctx = ziti.Ziti_load_context
 _load_ctx.argtypes = [ctypes.POINTER(ctypes.c_char), ]
 _load_ctx.restype = ctypes.c_void_p
@@ -59,9 +63,23 @@ _ziti_connect_addr.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
 _ziti_connect_addr.restype = ctypes.c_int
 
 
+_ziti_enroll = ziti.Ziti_enroll_identity
+_ziti_enroll.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p,
+                         ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_size_t)]
+_ziti_enroll.restype = ctypes.c_int
+
+_free = ziti.free
+_free.argtypes = [ctypes.c_void_p]
+
+
 def version():
     ver = _ziti_version().contents
     return ver
+
+
+def errorstr(code):
+    msg = _ziti_errorstr(code)
+    return msg.decode()
 
 
 def init():
@@ -81,3 +99,21 @@ def connect(fd, addr: Tuple[str, int]):
     host = bytes(addr[0], encoding = 'utf-8')
     port = addr[1]
     return _ziti_connect_addr(fd, host, port)
+
+
+def enroll(jwt, key = None, cert = None):
+    try:
+        with open(jwt, 'rb') as f:
+            jwtc = bytes(f.read())
+    except:
+        jwtc = bytes(jwt, 'utf-8')
+
+    id_json = ctypes.c_char_p()
+    id_json_len = ctypes.c_size_t()
+    rc = _ziti_enroll(jwtc, key, cert, ctypes.byref(id_json), ctypes.byref(id_json_len))
+    if rc != 0:
+        raise RuntimeError(errorstr(rc))
+    try:
+        return id_json.value.decode()
+    finally:
+        _free(id_json)
