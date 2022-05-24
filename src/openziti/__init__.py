@@ -14,14 +14,14 @@
 
 import socket as sock
 from os import getenv
-from . import zitilib, context, zitisock
 
+from . import _version, context, zitilib, zitisock
 
 _ziti_identities = filter(lambda p: p != '',
                           map(lambda s: s.strip(),
                               (getenv('ZITI_IDENTITIES') or "").split(';')))
 
-_id_map = dict()
+_id_map = {}
 
 zitilib.init()
 
@@ -29,34 +29,36 @@ enroll = zitilib.enroll
 version = zitilib.version
 shutdown = zitilib.shutdown
 load = context.load_identity
-socket = zitisock.ZitiSocket
+socket = zitisock.ZitiSocket  # pylint: disable=invalid-name
 
-for id in _ziti_identities:
-    if id != '':
-        load(id)
+for identity in _ziti_identities:
+    if identity != '':
+        load(identity)
 
-_patch_methods = dict(
-    create_connection = zitisock.create_ziti_connection,
-    getaddrinfo = zitisock.ziti_getaddrinfo
-)
+_patch_methods = {
+    "create_connection": zitisock.create_ziti_connection,
+    "getaddrinfo": zitisock.ziti_getaddrinfo
+}
 
 
-class monkeypatch(object):
+class MonkeyPatch():
     def __init__(self):
         self.orig_socket = sock.socket
         sock.socket = zitisock.ZitiSocket
-        self.orig_methods = dict((m, sock.__dict__[m]) for m in _patch_methods)
-        for m in _patch_methods:
-            sock.__dict__[m] = _patch_methods[m]
+        self.orig_methods = {m: sock.__dict__[m] for m, _ in
+                             _patch_methods.items()}
+        for m_name, _ in _patch_methods.items():
+            sock.__dict__[m_name] = _patch_methods[m_name]
 
     def __enter__(self):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for m in self.orig_methods:
-            sock.__dict__[m] = self.orig_methods[m]
+        for m_name, _ in self.orig_methods.items():
+            sock.__dict__[m_name] = self.orig_methods[m_name]
 
 
-from . import _version
+monkeypatch = MonkeyPatch  # pylint: disable=invalid-name
+
 __version__ = _version.get_versions()['version']
 del _version

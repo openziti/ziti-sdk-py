@@ -13,43 +13,40 @@
 #  limitations under the License.
 
 import sys
-import sysconfig
+import zipfile
+from configparser import ConfigParser
+from io import BytesIO
 from os.path import dirname
+from urllib.error import HTTPError
+from urllib.request import Request, urlopen
 
 ZITI_SDK_BASE = 'https://github.com/openziti/ziti-sdk-c/releases/download'
 
 
-def download_sdk(osname, arch, version):
-    from urllib.request import Request
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
-
+def download_sdk(version):
     filename = f'{ZITI_SDK_BASE}/{version}/ziti-sdk-{version}-{osname}-{arch}.zip'
-    headers = dict()
+    headers = {}
     req = Request(url=filename, headers=headers)
     try:
-        response = urlopen(req)
+        with urlopen(req) as response:
+            length = response.getheader('content-length')
+            if response.status != 200:
+                print(f'Could not download "{filename}"', file=sys.stderr)
+                return None
+
+            print(f"Downloading {length} from {filename}", file=sys.stderr)
+            return response.read()
     except HTTPError:
         print(f'Could not download "{filename}"', file=sys.stderr)
         raise
-    length = response.getheader('content-length')
-    if response.status != 200:
-        print(f'Could not download "{filename}"', file=sys.stderr)
-        return None
-
-    print(f"Downloading {length} from {filename}", file=sys.stderr)
-    return response.read()
 
 
 def extract(data, libname):
-    from io import BytesIO
-    import zipfile
-    zip = zipfile.ZipFile(BytesIO(data))
-    return zip.extract(member=f'lib/{libname}',path=f'src/openziti/')
+    with zipfile.ZipFile(BytesIO(data)) as zipf:
+        return zipf.extract(member=f'lib/{libname}', path='src/openziti/')
 
 
 def get_sdk_version():
-    from configparser import ConfigParser
     cfgfile = f'{dirname(__file__)}/../setup.cfg'
     parser = ConfigParser()
     parser.read(cfgfile)
@@ -64,13 +61,14 @@ if __name__ == '__main__':
     print(f'platform={osname}-{arch}')
 
     osname = osname.capitalize()
-    libname = None
     if osname == 'Linux':
-        libname = 'libziti.so'
+        LIBNAME = 'libziti.so'
     elif osname == 'Darwin':
-        libname = 'libziti.dylib'
+        LIBNAME = 'libziti.dylib'
     elif osname == 'win64':
-        libname = 'ziti.dll'
+        LIBNAME = 'ziti.dll'
+    else:
+        raise RuntimeError("Unsupported platform/arch")
 
-    d = download_sdk(osname, arch, version=sdk_version)
-    libfile = extract(d, libname)
+    d = download_sdk(version=sdk_version)
+    libfile = extract(d, LIBNAME)

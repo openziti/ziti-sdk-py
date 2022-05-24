@@ -15,20 +15,21 @@
 from . import zitilib
 
 
-def do_enroll(args):
-    with open(args.jwt) as jwtFile:
-        jwt = jwtFile.read()
+def do_enroll():
+    with open(args.jwt) as jwt_file:  # pylint: disable=unspecified-encoding
+        jwt = jwt_file.read()
 
-    with open(args.identity, 'wb') as idFile:
+    with open(args.identity, 'wb') as id_file:
         id_json = zitilib.enroll(jwt, key=args.key, cert=args.cert)
-        idFile.write(bytes(id_json, 'utf-8'))
+        id_file.write(bytes(id_json, 'utf-8'))
 
 
 if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser('openziti')
     parser.set_defaults(func=parser.print_help)
-    subcommands = parser.add_subparsers(help='sub-command help', dest='subcommand')
+    subcommands = parser.add_subparsers(help='sub-command help',
+                                        dest='subcommand')
 
     enroll_cmd = subcommands.add_parser('enroll', help='enroll identity')
     enroll_cmd.add_argument('-j', '--jwt', required=True)

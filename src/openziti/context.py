@@ -13,16 +13,19 @@
 #  limitations under the License.
 
 import socket
+
 from . import zitilib
 
 
 class ZitiContext:
+    # pylint: disable=too-few-public-methods
     def __init__(self, ctx_p):
         self._ctx = ctx_p
 
     def connect(self, addr):
+        # pylint: disable=invalid-name
         fd = zitilib.ziti_socket(socket.SOCK_STREAM)
-        service = bytes(addr, encoding = "utf-8")
+        service = bytes(addr, encoding="utf-8")
         zitilib.ziti_connect(fd, self._ctx, service)
         return socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0, fd)
 
