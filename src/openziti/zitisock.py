@@ -13,56 +13,57 @@
 #  limitations under the License.
 
 import socket
-from socket import socket as py_socket
+from socket import socket as PySocket
 from typing import Tuple
+
 from . import zitilib
 
 
-class ZitiSocket(py_socket):
+class ZitiSocket(PySocket):
+    # pylint: disable=redefined-builtin
     def __init__(self, af=-1, type=-1, proto=-1, fileno=None):
         self._ziti_af = af
         self._ziti_type = type
         self._ziti_proto = proto
         if fileno:
-            py_socket.__init__(self, af, type, proto, fileno)
+            super().__init__(af, type, proto, fileno)
             return
 
+        if type == -1:
+            type = socket.SOCK_STREAM
+
         self._zitifd = zitilib.ziti_socket(type)
-        py_socket.__init__(self, af, type, proto, self._zitifd)
+        super().__init__(af, type, proto, self._zitifd)
 
     def connect(self, addr) -> None:
         if self._zitifd is None:
             pass
 
         if isinstance(addr, Tuple):
-            rc = zitilib.connect(self._zitifd, addr)
-            if rc != 0:
-                py_socket.close(self)
+            retcode = zitilib.connect(self._zitifd, addr)
+            if retcode != 0:
+                PySocket.close(self)
                 self._zitifd = None
-                py_socket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
-                py_socket.connect(self, addr)
+                PySocket.__init__(self, self._ziti_af, self._ziti_type,
+                                  self._ziti_proto)
+                PySocket.connect(self, addr)
 
     def setsockopt(self, __level, __optname, __value) -> None:
         try:
-            py_socket.setsockopt(self, __level, __optname, __value)
-        except:
+            PySocket.setsockopt(self, __level, __optname, __value)
+        except:  # pylint: disable=bare-except
             pass
 
 
-def create_ziti_connection(address,
-                           timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
-                           source_address=None):
-    s = ZitiSocket(socket.SOCK_STREAM)
-    s.connect(address)
-    return s
+def create_ziti_connection(address, **_):
+    sock = ZitiSocket(socket.SOCK_STREAM)
+    sock.connect(address)
+    return sock
 
 
 def ziti_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-    addrlist = []
-    addr = (
-        socket._intenum_converter(socket.AF_INET, socket.AddressFamily),
-        socket._intenum_converter(type, socket.SocketKind),
-        proto, '', (host, port))
-
-    addrlist.append(addr)
-    return addrlist
+    # pylint: disable=too-many-arguments, unused-argument
+    # pylint: disable= redefined-builtin, protected-access, no-member
+    return [(socket._intenum_converter(socket.AF_INET, socket.AddressFamily),
+             socket._intenum_converter(type, socket.SocketKind),
+             proto, '', (host, port))]

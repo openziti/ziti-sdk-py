@@ -18,25 +18,26 @@ import platform
 from typing import Tuple
 
 _mod_path = os.path.dirname(__file__)
-libname = None
 osname = platform.system().lower()
+
 if osname == 'linux':
-    libname = 'libziti.so'
+    LIBNAME = 'libziti.so'
 elif osname == 'darwin':
-    libname = 'libziti.dylib'
+    LIBNAME = 'libziti.dylib'
 elif osname == 'windows':
-    libname = 'ziti.dll'
+    LIBNAME = 'ziti.dll'
 else:
     raise ImportError("could not load ziti shared library")
 
-ziti = ctypes.CDLL(_mod_path + f'/lib/{libname}')
+ziti = ctypes.CDLL(_mod_path + f'/lib/{LIBNAME}')
 
 
 class _Ver(ctypes.Structure):
+    # pylint: disable=too-few-public-methods
     _fields_ = [('version', ctypes.c_char_p), ('revision', ctypes.c_char_p)]
 
     def __repr__(self):
-        return '({0}, {1})'.format(self.version, self.revision)
+        return f'({self.version}, {self.revision})'
 
 
 _ziti_version = ziti.ziti_get_version
@@ -64,8 +65,13 @@ _ziti_connect_addr.restype = ctypes.c_int
 
 
 _ziti_enroll = ziti.Ziti_enroll_identity
-_ziti_enroll.argtypes = [ctypes.c_char_p, ctypes.c_char_p, ctypes.c_char_p,
-                         ctypes.POINTER(ctypes.c_char_p), ctypes.POINTER(ctypes.c_size_t)]
+_ziti_enroll.argtypes = [
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        ctypes.c_char_p,
+        ctypes.POINTER(ctypes.c_char_p),
+        ctypes.POINTER(ctypes.c_size_t)
+]
 _ziti_enroll.restype = ctypes.c_int
 
 _free = ziti.free
@@ -91,28 +97,31 @@ def shutdown():
 
 
 def load(path):
-    b = bytes(path, encoding = "utf-8")
-    return _load_ctx(b)
+    b_obj = bytes(path, encoding="utf-8")
+    return _load_ctx(b_obj)
 
 
 def connect(fd, addr: Tuple[str, int]):
-    host = bytes(addr[0], encoding = 'utf-8')
+    # pylint: disable=invalid-name
+    host = bytes(addr[0], encoding='utf-8')
     port = addr[1]
     return _ziti_connect_addr(fd, host, port)
 
 
-def enroll(jwt, key = None, cert = None):
+def enroll(jwt, key=None, cert=None):
     try:
-        with open(jwt, 'rb') as f:
-            jwtc = bytes(f.read())
-    except:
+        with open(jwt, 'rb') as jwt_f:
+            jwtc = bytes(jwt_f.read())
+    except:  # pylint: disable=bare-except
         jwtc = bytes(jwt, 'utf-8')
 
     id_json = ctypes.c_char_p()
     id_json_len = ctypes.c_size_t()
-    rc = _ziti_enroll(jwtc, key, cert, ctypes.byref(id_json), ctypes.byref(id_json_len))
-    if rc != 0:
-        raise RuntimeError(errorstr(rc))
+    retcode = _ziti_enroll(jwtc, key, cert,
+                           ctypes.byref(id_json),
+                           ctypes.byref(id_json_len))
+    if retcode != 0:
+        raise RuntimeError(errorstr(retcode))
     try:
         return id_json.value.decode()
     finally:
