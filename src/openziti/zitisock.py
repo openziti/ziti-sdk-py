@@ -11,7 +11,6 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
 import socket
 from socket import socket as PySocket
 from typing import Tuple
@@ -21,7 +20,11 @@ from . import zitilib
 
 class ZitiSocket(PySocket):
     # pylint: disable=redefined-builtin
-    def __init__(self, af=-1, type=-1, proto=-1, fileno=None):
+    def __init__(self, af=-1, type=-1, proto=-1, fileno=None, opts=None):
+        if opts is None:
+            opts = {}
+        self._bind_address = None
+        self._ziti_opts = opts
         self._ziti_af = af
         self._ziti_type = type
         self._ziti_proto = proto
@@ -40,13 +43,38 @@ class ZitiSocket(PySocket):
             pass
 
         if isinstance(addr, Tuple):
-            retcode = zitilib.connect(self._zitifd, addr)
-            if retcode != 0:
+            try:
+                zitilib.connect_addr(self._zitifd, addr)
+            except:
                 PySocket.close(self)
                 self._zitifd = None
                 PySocket.__init__(self, self._ziti_af, self._ziti_type,
                                   self._ziti_proto)
                 PySocket.connect(self, addr)
+
+    def bind(self, addr) -> None:
+        self._bind_address = addr
+        bindings = self._ziti_opts['bindings']
+        cfg = bindings[addr]
+        if cfg is None:
+            raise RuntimeError(f'no ziti binding for {addr}')
+        ztx = cfg['ztx']
+        service = cfg['service']
+        ztx.bind(service, self)
+
+    def getsockname(self):
+        # return this for now since frameworks expect something to be returned
+        return ('127.0.0.1', 0)
+
+    def listen(self, __backlog: int = 5) -> None:
+        try:
+            zitilib.listen(self._zitifd, __backlog)
+        except:
+            super().listen(__backlog)
+
+    def accept(self):
+        fd, peer = zitilib.accept(self.fileno())
+        return ZitiSocket(af=self._ziti_af, type=self._ziti_type, fileno=fd), peer
 
     def setsockopt(self, __level, __optname, __value) -> None:
         try:
