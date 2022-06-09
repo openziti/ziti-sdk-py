@@ -21,6 +21,7 @@ from . import zitilib
 class ZitiSocket(PySocket):
     # pylint: disable=redefined-builtin
     def __init__(self, af=-1, type=-1, proto=-1, fileno=None, opts=None):
+        zitilib.init()
         if opts is None:
             opts = {}
         self._bind_address = None

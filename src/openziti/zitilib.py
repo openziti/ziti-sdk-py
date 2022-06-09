@@ -116,6 +116,7 @@ def shutdown():
 
 
 def load(path):
+    init()
     b_obj = bytes(path, encoding="utf-8")
     return _load_ctx(b_obj)
 
