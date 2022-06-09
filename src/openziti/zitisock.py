@@ -54,12 +54,13 @@ class ZitiSocket(PySocket):
                 PySocket.connect(self, addr)
 
     def bind(self, addr) -> None:
+        from .context import get_context
         self._bind_address = addr
         bindings = self._ziti_opts['bindings']
         cfg = bindings[addr]
         if cfg is None:
             raise RuntimeError(f'no ziti binding for {addr}')
-        ztx = cfg['ztx']
+        ztx = get_context(cfg['ztx'])
         service = cfg['service']
         ztx.bind(service, self)
 

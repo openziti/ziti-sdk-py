@@ -21,7 +21,7 @@ class ZitiContext:
     # pylint: disable=too-few-public-methods
     def __init__(self, ctx):
         ztx = ctx
-        if ctx is str:
+        if isinstance(ctx, str):
             ztx = zitilib.load(ctx)
         self._ctx = ztx
 
@@ -45,3 +45,11 @@ class ZitiContext:
 
 def load_identity(path) -> ZitiContext:
     return ZitiContext(zitilib.load(path))
+
+
+def get_context(ztx) -> ZitiContext:
+    if isinstance(ztx, ZitiContext):
+        return ztx
+    if isinstance(ztx, str):
+        return ZitiContext(ztx)
+    raise RuntimeError(f'{ztx} is not a Ziti Context or a path')
