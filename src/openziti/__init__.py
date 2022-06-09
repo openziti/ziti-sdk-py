@@ -12,18 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-import socket as sock
 from os import getenv
 
-from . import _version, context, zitilib, zitisock
+from . import _version, context, zitilib, zitisock, decor
 
 _ziti_identities = filter(lambda p: p != '',
                           map(lambda s: s.strip(),
                               (getenv('ZITI_IDENTITIES') or "").split(';')))
-
-_id_map = {}
-
-zitilib.init()
 
 enroll = zitilib.enroll
 version = zitilib.version
@@ -35,30 +30,8 @@ for identity in _ziti_identities:
     if identity != '':
         load(identity)
 
-_patch_methods = {
-    "create_connection": zitisock.create_ziti_connection,
-    "getaddrinfo": zitisock.ziti_getaddrinfo
-}
-
-
-class MonkeyPatch():
-    def __init__(self):
-        self.orig_socket = sock.socket
-        sock.socket = zitisock.ZitiSocket
-        self.orig_methods = {m: sock.__dict__[m] for m, _ in
-                             _patch_methods.items()}
-        for m_name, _ in _patch_methods.items():
-            sock.__dict__[m_name] = _patch_methods[m_name]
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        for m_name, _ in self.orig_methods.items():
-            sock.__dict__[m_name] = self.orig_methods[m_name]
-
-
-monkeypatch = MonkeyPatch  # pylint: disable=invalid-name
+monkeypatch = decor.MonkeyPatch # pylint: disable=invalid-name
+zitify = decor.zitify
 
 __version__ = _version.get_versions()['version']
 del _version
