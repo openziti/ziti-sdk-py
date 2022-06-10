@@ -10,10 +10,12 @@ OpenZiti Python SDK in Action
 
 - get yourself a Ziti identity from [ZEDS](https://zeds.openziti.org)
 
-  follow enrollment instructions from the site.
-  these instructions assume that Ziti identity is stored in `id.json` file
-  
-  _Enrollment with Python is coming soon_
+  follow enrollment instructions from the site, or better yet enroll with openziti Python module
+  ```bash
+  $ python -m openziti enroll --jwt=<enrollment token file> --identity=<identity file>
+  ```
+
+  the following instructions assume that Ziti identity is stored in `id.json` file
 
 
 - set `ZITI_IDENTITIES` environment variable to location of `id.json` file
