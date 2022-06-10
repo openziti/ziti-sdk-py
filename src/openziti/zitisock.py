@@ -15,7 +15,7 @@ import socket
 from socket import socket as PySocket
 from typing import Tuple
 
-from . import zitilib
+from . import zitilib, context
 
 
 class ZitiSocket(PySocket):
@@ -54,13 +54,12 @@ class ZitiSocket(PySocket):
                 PySocket.connect(self, addr)
 
     def bind(self, addr) -> None:
-        from .context import get_context
         self._bind_address = addr
         bindings = self._ziti_opts['bindings']
-        cfg = bindings[addr]
+        cfg = bindings.get(addr)
         if cfg is None:
             raise RuntimeError(f'no ziti binding for {addr}')
-        ztx = get_context(cfg['ztx'])
+        ztx = context.get_context(cfg['ztx'])
         service = cfg['service']
         ztx.bind(service, self)
 
@@ -81,7 +80,7 @@ class ZitiSocket(PySocket):
     def setsockopt(self, __level, __optname, __value) -> None:
         try:
             PySocket.setsockopt(self, __level, __optname, __value)
-        except:  # pylint: disable=bare-except
+        except:
             pass
 
 
@@ -92,8 +91,8 @@ def create_ziti_connection(address, **_):
 
 
 def ziti_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-    # pylint: disable=too-many-arguments, unused-argument
-    # pylint: disable= redefined-builtin, protected-access, no-member
+    # pylint: disable=unused-argument,redefined-builtin
+    # pylint: disable=protected-access,no-member
     return [(socket._intenum_converter(socket.AF_INET, socket.AddressFamily),
              socket._intenum_converter(type, socket.SocketKind),
              proto, '', (host, port))]

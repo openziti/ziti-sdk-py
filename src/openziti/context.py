@@ -13,27 +13,25 @@
 #  limitations under the License.
 
 import socket
+from os.path import isdir, isfile
 
 from . import zitilib, zitisock
 
 
 class ZitiContext:
-    # pylint: disable=too-few-public-methods
     def __init__(self, ctx):
-        ztx = ctx
-        if isinstance(ctx, str):
-            ztx = zitilib.load(ctx)
-        self._ctx = ztx
+        if not isinstance(ctx, int):
+            raise TypeError("ctx is not a valid python void pointer type")
+        self._ctx = ctx
 
     def connect(self, addr):
-        # pylint: disable=invalid-name
         fd = zitilib.ziti_socket(socket.SOCK_STREAM)
         if addr is str:
             zitilib.connect(fd, self._ctx, addr)
         elif addr is tuple:
             zitilib.connect_addr(fd, addr)
         else:
-            raise RuntimeError(f'unsupported address {addr}')
+            raise TypeError(f'unsupported address {addr}')
         return socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0, fd)
 
     def bind(self, service, sock=None):
@@ -42,14 +40,22 @@ class ZitiContext:
         zitilib.bind(sock.fileno(), self._ctx, service)
         return sock
 
+    @classmethod
+    def from_path(cls, path):
+        if not isinstance(path, str):
+            raise TypeError("path must be a string")
+        if not (isfile(path) or isdir(path)):
+            raise ValueError(f"{path} is not a valid path")
+        return cls(zitilib.load(path))
+
 
 def load_identity(path) -> ZitiContext:
-    return ZitiContext(zitilib.load(path))
+    return ZitiContext.from_path(path)
 
 
 def get_context(ztx) -> ZitiContext:
     if isinstance(ztx, ZitiContext):
         return ztx
     if isinstance(ztx, str):
-        return ZitiContext(ztx)
-    raise RuntimeError(f'{ztx} is not a Ziti Context or a path')
+        return ZitiContext.from_path(ztx)
+    raise TypeError(f'{ztx} is not a ZitiContext or str instance')

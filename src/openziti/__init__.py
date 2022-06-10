@@ -14,7 +14,7 @@
 
 from os import getenv
 
-from . import _version, context, zitilib, zitisock, decor
+from . import _version, context, decor, zitilib, zitisock
 
 _ziti_identities = filter(lambda p: p != '',
                           map(lambda s: s.strip(),
@@ -24,13 +24,13 @@ enroll = zitilib.enroll
 version = zitilib.version
 shutdown = zitilib.shutdown
 load = context.load_identity
-socket = zitisock.ZitiSocket  # pylint: disable=invalid-name
+socket = zitisock.ZitiSocket
 
 for identity in _ziti_identities:
     if identity != '':
         load(identity)
 
-monkeypatch = decor.MonkeyPatch # pylint: disable=invalid-name
+monkeypatch = decor.MonkeyPatch
 zitify = decor.zitify
 
 __version__ = _version.get_versions()['version']

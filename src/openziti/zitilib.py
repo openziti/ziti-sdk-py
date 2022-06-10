@@ -33,7 +33,6 @@ ziti = ctypes.CDLL(_mod_path + f'/lib/{LIBNAME}')
 
 
 class _Ver(ctypes.Structure):
-    # pylint: disable=too-few-public-methods
     _fields_ = [('version', ctypes.c_char_p), ('revision', ctypes.c_char_p)]
 
     def __repr__(self):
@@ -127,7 +126,6 @@ def connect(fd, ztx, service: str):
 
 
 def connect_addr(fd, addr: Tuple[str, int]):
-    # pylint: disable=invalid-name
     host = bytes(addr[0], encoding='utf-8')
     port = addr[1]
     check_error(_ziti_connect_addr(fd, host, port))
@@ -147,14 +145,14 @@ def accept(fd):
     clt = _ziti_accept(fd, b, 128)
     if clt < 0:
         check_error(clt)
-    return clt,(bytes(b.value).decode('utf-8'), 0)
+    return clt, (bytes(b.value).decode('utf-8'), 0)
 
 
 def enroll(jwt, key=None, cert=None):
     try:
         with open(jwt, 'rb') as jwt_f:
             jwtc = bytes(jwt_f.read())
-    except:  # pylint: disable=bare-except
+    except:
         jwtc = bytes(jwt, 'utf-8')
 
     id_json = ctypes.c_char_p()
