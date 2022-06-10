@@ -29,9 +29,9 @@ def _patchedSocket(patch_opts):
 
 
 class MonkeyPatch():
-    def __init__(self, **args):
+    def __init__(self, **kwargs):
         self.orig_socket = sock.socket
-        sock.socket = _patchedSocket(args)
+        sock.socket = _patchedSocket(kwargs)
         self.orig_methods = {m: sock.__dict__[m] for m, _ in
                              _patch_methods.items()}
         for m_name, _ in _patch_methods.items():
@@ -47,10 +47,10 @@ class MonkeyPatch():
 
 
 
-def zitify(**zargs):
+def zitify(**zkwargs):
     def zitify_func(func):
         def zitified(*args, **kwargs):
-            with MonkeyPatch(**zargs):
+            with MonkeyPatch(**zkwargs):
                 func(*args, **kwargs)
         return zitified
     return zitify_func

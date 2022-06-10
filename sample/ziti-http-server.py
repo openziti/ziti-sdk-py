@@ -32,7 +32,7 @@ class MyServer(BaseHTTPRequestHandler):
         self.send_response(200)
         self.send_header("Content-type", "application/json")
         self.end_headers()
-        msg = """{"msg": "Help! I was ziified!"}"""
+        msg = """{"msg": "Help! I was zitified!"}"""
         self.wfile.write(bytes(msg, "utf-8"))
 
 
