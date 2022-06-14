@@ -26,9 +26,9 @@ class ZitiContext:
 
     def connect(self, addr):
         fd = zitilib.ziti_socket(socket.SOCK_STREAM)
-        if addr is str:
+        if isinstance(addr, str):
             zitilib.connect(fd, self._ctx, addr)
-        elif addr is tuple:
+        elif isinstance(addr, tuple):
             zitilib.connect_addr(fd, addr)
         else:
             raise TypeError(f'unsupported address {addr}')
