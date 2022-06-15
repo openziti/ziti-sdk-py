@@ -12,8 +12,8 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import socket as sock
-from . import zitisock
 
+from . import zitisock
 
 _patch_methods = {
     "create_connection": zitisock.create_ziti_connection,
@@ -43,8 +43,6 @@ class MonkeyPatch():
     def __exit__(self, exc_type, exc_val, exc_tb):
         for m_name, _ in self.orig_methods.items():
             sock.__dict__[m_name] = self.orig_methods[m_name]
-
-
 
 
 def zitify(**zkwargs):
