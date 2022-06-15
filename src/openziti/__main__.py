@@ -15,7 +15,7 @@
 from . import zitilib
 
 
-def do_enroll():
+def do_enroll(args):
     with open(args.jwt) as jwt_file:  # pylint: disable=unspecified-encoding
         jwt = jwt_file.read()
 
