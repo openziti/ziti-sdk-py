@@ -1,27 +1,26 @@
-Ziti SDK for Python
-===================
+# Ziti SDK for Python
 
-# Installation
+## Installation
 
 Ziti SDK for Python is distributed via Python Package Index(PyPI)
 
 ```shell
-$ pip install openziti
+pip install openziti
 ```
 
-# Usage
+## Usage
 
-## Identity Enrollment
+### Identity Enrollment
 
-Acquire [Ziti Enrollment Token](https://openziti.github.io/ziti/identities/overview.html) 
+Acquire [Ziti Enrollment Token](https://openziti.github.io/ziti/identities/overview.html)
+
 ```shell
-$ python -m openziti enroll -j <JWT file> -i <ID JSON file>
+python -m openziti enroll -j <JWT file> -i <ID JSON file>
 ```
 
+## Getting Help
 
-# Getting Help
-
-Please use these community resources for getting help. We use GitHub [issues](https://github.com/NetFoundry/ziti-sdk-py/issues) 
+Please use these community resources for getting help. We use GitHub [issues](https://github.com/openziti/ziti-sdk-py/issues)
 for tracking bugs and feature requests and have limited bandwidth to address them.
 
 - Read the [docs](https://openziti.github.io/ziti/overview.html)
