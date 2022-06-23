@@ -149,6 +149,7 @@ def accept(fd):
 
 
 def enroll(jwt, key=None, cert=None):
+    init()
     try:
         with open(jwt, 'rb') as jwt_f:
             jwtc = bytes(jwt_f.read())
