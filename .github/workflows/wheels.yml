@@ -11,6 +11,7 @@ jobs:
         spec:
           - { name: 'linux x86_64', runner: ubuntu-20.04, target: manylinux_2_27_x86_64 }
           - { name: 'macOS x86_64', runner: macos-10.15, target: macosx_10_14_x86_64 }
+          - { name: 'Windows x86_64', runner: windows-2019, target: win_amd64 }
     name: building ${{ matrix.spec.name }}
     runs-on: ${{ matrix.spec.runner }}
     env:
@@ -31,7 +32,6 @@ jobs:
 
       - name: Get Ziti SDK C
         run: |
-          set -x
           python tools/get_zitilib.py
 
       - name: Run Integration Tests
@@ -41,6 +41,7 @@ jobs:
           ZITI_IDENTITIES: id.json
         run: |
           echo "${ZITI_TEST_IDENTITY}" > "${ZITI_IDENTITIES}"
+          ls
           pip install -r tests/requirements.txt
           pip install .
           python -m unittest tests/ziti_tests.py

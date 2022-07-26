@@ -82,9 +82,14 @@ _ziti_enroll.argtypes = [
 ]
 _ziti_enroll.restype = ctypes.c_int
 
-_free = ziti.free
-_free.argtypes = [ctypes.c_void_p]
+def free_win32(arg):
+    pass
 
+if osname != 'windows':
+    _free = ziti.free
+    _free.argtypes = [ctypes.c_void_p]
+else:
+    _free = free_win32
 
 def version():
     ver = _ziti_version().contents
