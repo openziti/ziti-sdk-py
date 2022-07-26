@@ -65,7 +65,7 @@ if __name__ == '__main__':
         LIBNAME = 'libziti.so'
     elif osname == 'Darwin':
         LIBNAME = 'libziti.dylib'
-    elif osname == 'win64':
+    elif osname == 'Windows':
         LIBNAME = 'ziti.dll'
     else:
         raise RuntimeError("Unsupported platform/arch")
