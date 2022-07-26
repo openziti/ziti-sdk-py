@@ -10,7 +10,7 @@ jobs:
       matrix:
         spec:
           - { name: 'linux x86_64', runner: ubuntu-20.04, target: manylinux_2_27_x86_64 }
-          - { name: 'macOS x86_64', runner: macos-10.15, target: macosx_10_14_x86_64 }
+          - { name: 'macOS x86_64', runner: macos-11, target: macosx_10_14_x86_64 }
           - { name: 'Windows x86_64', runner: windows-2019, target: win_amd64 }
     name: building ${{ matrix.spec.name }}
     runs-on: ${{ matrix.spec.runner }}
@@ -39,6 +39,7 @@ jobs:
         env:
           ZITI_TEST_IDENTITY: ${{ secrets.ZITI_TEST_IDENTITY }}
           ZITI_IDENTITIES: id.json
+        shell: bash
         run: |
           echo "${ZITI_TEST_IDENTITY}" > "${ZITI_IDENTITIES}"
           ls
@@ -77,7 +78,7 @@ jobs:
           cp download/*/* dist
 
       - name: Publish wheels (TestPYPI)
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.TEST_PYPI_API_TOKEN }}
@@ -88,7 +89,7 @@ jobs:
 
       - name: Publish wheels (PyPI)
         if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@master
+        uses: pypa/gh-action-pypi-publish@release/v1
         with:
           user: __token__
           password: ${{ secrets.PYPI_API_TOKEN }}
