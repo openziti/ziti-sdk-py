@@ -37,3 +37,7 @@ for tracking bugs and feature requests and have limited bandwidth to address the
 - Participate in discussion on [Discourse](https://openziti.discourse.group/)
 
 Copyright&copy; 2018-2022. NetFoundry, Inc.
+
+## Troubleshooting
+
+Windows: You need to have "Windows SDK" and VS 2022 with minimum "Desktop development with C++" VCRUNTIME140D.dll installed. This debugging DLL seems to be only available in VS 2022.
