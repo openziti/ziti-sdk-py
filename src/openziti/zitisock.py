@@ -61,7 +61,10 @@ class ZitiSocket(PySocket):
             raise RuntimeError(f'no ziti binding for {addr}')
         ztx = context.get_context(cfg['ztx'])
         service = cfg['service']
-        ztx.bind(service, self)
+        terminator = None
+        if isinstance(service, tuple):
+            service,terminator = service
+        ztx.bind(service=service, terminator=terminator, sock=self)
 
     def getsockname(self):
         # return this for now since frameworks expect something to be returned
