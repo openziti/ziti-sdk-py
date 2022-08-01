@@ -34,10 +34,10 @@ class ZitiContext:
             raise TypeError(f'unsupported address {addr}')
         return socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0, fd)
 
-    def bind(self, service, sock=None):
+    def bind(self, service, terminator=None, sock=None):
         if sock is None:
             sock = zitisock.ZitiSocket(type=socket.SOCK_STREAM)
-        zitilib.bind(sock.fileno(), self._ctx, service)
+        zitilib.bind(sock.fileno(), self._ctx, service, terminator)
         return sock
 
     @classmethod

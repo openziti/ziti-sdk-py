@@ -57,14 +57,22 @@ ziti_socket.argtypes = [ctypes.c_int]
 ziti_socket.restype = ctypes.c_int
 
 _ziti_connect = ziti.Ziti_connect
-_ziti_connect.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_char_p]
+_ziti_connect.argtypes = [ctypes.c_int, # socket fd
+                          ctypes.c_void_p, # zitt context
+                          ctypes.c_char_p, # service
+                          ctypes.c_char_p # terminator
+                          ]
 
 _ziti_connect_addr = ziti.Ziti_connect_addr
 _ziti_connect_addr.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
 _ziti_connect_addr.restype = ctypes.c_int
 
 _ziti_bind = ziti.Ziti_bind
-_ziti_bind.argtypes = [ctypes.c_int, ctypes.c_void_p, ctypes.c_char_p]
+_ziti_bind.argtypes = [ctypes.c_int, # socket fd
+                       ctypes.c_void_p, # ziti context
+                       ctypes.c_char_p, # service
+                       ctypes.c_char_p # terminator
+                       ]
 
 _ziti_listen = ziti.Ziti_listen
 _ziti_listen.argtypes = [ctypes.c_int, ctypes.c_int]
@@ -82,9 +90,14 @@ _ziti_enroll.argtypes = [
 ]
 _ziti_enroll.restype = ctypes.c_int
 
-_free = ziti.free
-_free.argtypes = [ctypes.c_void_p]
+def free_win32(arg):
+    pass
 
+if osname != 'windows':
+    _free = ziti.free
+    _free.argtypes = [ctypes.c_void_p]
+else:
+    _free = free_win32
 
 def version():
     ver = _ziti_version().contents
@@ -120,9 +133,10 @@ def load(path):
     return _load_ctx(b_obj)
 
 
-def connect(fd, ztx, service: str):
+def connect(fd, ztx, service: str, terminator: str = None):
     srv = bytes(service, encoding='utf-8')
-    check_error(_ziti_connect(fd, ztx, srv))
+    terminator = bytes(terminator, encoding='utf-8')
+    check_error(_ziti_connect(fd, ztx, srv, terminator))
 
 
 def connect_addr(fd, addr: Tuple[str, int]):
@@ -131,9 +145,11 @@ def connect_addr(fd, addr: Tuple[str, int]):
     check_error(_ziti_connect_addr(fd, host, port))
 
 
-def bind(fd, ztx, service):
+def bind(fd, ztx, service: str, terminator: str = None):
     srv = bytes(service, encoding='utf-8')
-    check_error(_ziti_bind(fd, ztx, srv))
+    if terminator:
+        terminator = bytes(terminator, encoding='utf-8')
+    check_error(_ziti_bind(fd, ztx, srv, terminator))
 
 
 def listen(fd, backlog):
