@@ -40,4 +40,4 @@ Copyright&copy; 2018-2022. NetFoundry, Inc.
 
 ## Troubleshooting
 
-Windows: You need to have "Windows SDK" and VS 2022 with minimum "Desktop development with C++" VCRUNTIME140D.dll installed. This debugging DLL seems to be only available in VS 2022.
+Windows: You need to have VCRUNTIME140.dll from Microsoft Visual C++ 2015 Redistributable Update 3 RC. It is no longer necessary to have the debugging library VCRUNTIME140D.dll from VisualStudio 2022.
