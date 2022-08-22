@@ -12,9 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import platform
 from setuptools import setup
 from setuptools.command.build_ext import build_ext
 from setuptools.extension import Extension
+from urllib.request import Request, urlopen
+import zipfile
+from io import BytesIO
 
 import versioneer
 
@@ -29,14 +33,12 @@ ZITI_SDK_BASE = 'https://github.com/openziti/ziti-sdk-c/releases/download'
 class GetZitilib(build_ext):
 
     def build_extension(self, ext) -> None:
-        import platform
         ziti_ver = self.get_sdk_version()
         osname, arch, libname = self.get_platform()
         sdk_distro = self.download_sdk(ziti_ver, osname, arch)
         self.extract_zitilib(sdk_distro, libname, self.build_lib)
 
     def get_platform(self):
-        import platform
         osname = platform.system()
         mach = platform.machine()
         arch, _ = platform.architecture()
@@ -58,28 +60,19 @@ class GetZitilib(build_ext):
         return ver
 
     def extract_zitilib(self, distro, libname, target):
-        import zipfile
-        from io import BytesIO
         with zipfile.ZipFile(BytesIO(distro)) as zipf:
             return zipf.extract(member=f'lib/{libname}', path=f'{target}/openziti')
 
     def download_sdk(self, version, osname, arch):
-        from urllib.error import HTTPError
-        from urllib.request import Request, urlopen
         filename = f'{ZITI_SDK_BASE}/{version}/ziti-sdk-{version}-{osname}-{arch}.zip'
         headers = {}
         req = Request(url=filename, headers=headers)
-        try:
-            with urlopen(req) as response:
-                length = response.getheader('content-length')
-                if response.status != 200:
-                    raise Exception(f'Could not download "{filename}"')
-                    return None
-
-                print(f"Downloading {length} from {filename}")
-                return response.read()
-        except HTTPError:
-            raise
+        with urlopen(req) as response:
+            length = response.getheader('content-length')
+            if response.status != 200:
+                raise Exception(f'Could not download "{filename}"')
+            print(f"Downloading {length} from {filename}")
+            return response.read()
 
 class ZitilibExt(Extension):
     def __init__(self, name, sourcedir=''):
