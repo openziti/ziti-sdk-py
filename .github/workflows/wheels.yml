@@ -28,11 +28,7 @@ jobs:
           python-version: '3.x'
 
       - name: Install Python Tools
-        run: python -m pip install -U pip setuptools wheel auditwheel
-
-      - name: Get Ziti SDK C
-        run: |
-          python tools/get_zitilib.py
+        run: python -m pip install -U pip setuptools
 
       - name: Run Integration Tests
         if: ${{ env.HAVE_TEST_ID == 'true' }}
@@ -47,23 +43,18 @@ jobs:
           pip install .
           python -m unittest tests/ziti_tests.py
 
-      - name: Build wheels
+      - name: Build distro
         run: |
-          pip wheel . -w ./wheelhouse --build-option --plat-name=${{ matrix.spec.target }}
-
-      - name: Audit wheel
-        if: startsWith(matrix.spec.name, 'linux')
-        run: |
-          auditwheel show ./wheelhouse/*
-          auditwheel repair --plat=${{ matrix.spec.target }} ./wheelhouse/*
+          python setup.py sdist
 
       - uses: actions/upload-artifact@v3
+        if: startsWith(matrix.spec.name, 'linux')
         with:
-          name: ${{ matrix.spec.name }}
-          path: ./wheelhouse/*.whl
+          name: openziiti-sdist
+          path: ./dist/*
 
   publish:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     needs: [ build_wheels ]
     steps:
       - name: Download artifacts
