@@ -42,6 +42,7 @@ class GetZitilib(build_ext):
         osname = platform.system()
         mach = platform.machine()
         arch, _ = platform.architecture()
+
         if osname == 'Linux':
             if mach.startswith('arm'):
                 if arch == '32bit':
@@ -49,9 +50,11 @@ class GetZitilib(build_ext):
                 elif arch == '64bit':
                     mach = 'arm64'
             return osname, mach, 'libziti.so'
-        elif osname == 'Darwin':
+
+        if osname == 'Darwin':
             return osname, mach, 'libziti.dylib'
-        elif osname == 'Windows':
+
+        if osname == 'Windows':
             return osname, mach, 'ziti.dll'
 
     def get_sdk_version(self):
