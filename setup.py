@@ -31,21 +31,26 @@ class GetZitilib(build_ext):
     def build_extension(self, ext) -> None:
         import platform
         ziti_ver = self.get_sdk_version()
-        osname = platform.system()
-        sdk_distro = self.download_sdk(ziti_ver, osname, platform.machine())
-        self.extract_zitilib(sdk_distro, self.get_lib_name(osname), self.build_lib)
+        osname, arch, libname = self.get_platform()
+        sdk_distro = self.download_sdk(ziti_ver, osname, arch)
+        self.extract_zitilib(sdk_distro, libname, self.build_lib)
 
-    def get_lib_name(self, osname):
-        osname = osname.capitalize()
+    def get_platform(self):
+        import platform
+        osname = platform.system()
+        mach = platform.machine()
+        arch, _ = platform.architecture()
         if osname == 'Linux':
-            libname = 'libziti.so'
+            if mach.startswith('arm'):
+                if arch == '32bit':
+                    mach = 'arm'
+                elif arch == '64bit':
+                    mach = 'arm64'
+            return osname, mach, 'libziti.so'
         elif osname == 'Darwin':
-            libname = 'libziti.dylib'
+            return osname, mach, 'libziti.dylib'
         elif osname == 'Windows':
-            libname = 'ziti.dll'
-        else:
-            raise RuntimeError(f"Unsupported platform[{osname}]")
-        return libname
+            return osname, mach, 'ziti.dll'
 
     def get_sdk_version(self):
         opts = self.distribution.get_option_dict('openziti')
