@@ -49,6 +49,8 @@ class GetZitilib(build_ext):
                     mach = 'arm'
                 elif arch == '64bit':
                     mach = 'arm64'
+            elif mach == 'aarch64':
+                mach = 'arm64'
             return osname, mach, 'libziti.so'
 
         if osname == 'Darwin':
