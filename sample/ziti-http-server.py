@@ -13,7 +13,6 @@
 #  limitations under the License.
 import sys
 from http.server import BaseHTTPRequestHandler, HTTPServer
-import time
 
 import openziti
 

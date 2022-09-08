@@ -165,6 +165,13 @@ def accept(fd):
 
 
 def enroll(jwt, key=None, cert=None):
+    """
+    Enroll Ziti Identity
+    :param jwt: (required) enrollment token, can be either name of the token file or a string containing JWT
+    :param key: private key to use for enrollment (required for 3rd party CA enrollment, otherwise optional, new key is generated if None)
+    :param cert: certificate to use for enrollment (required for 3rd party CA enrollment)
+    :return: string containing Ziti Identity in JSON format
+    """
     init()
     try:
         with open(jwt, 'rb') as jwt_f:
