@@ -28,7 +28,23 @@ def _patchedSocket(patch_opts):
     return patchedSocket
 
 
-class MonkeyPatch():
+class MonkeyPatch:
+    """
+    Monkeypatch allow to connect to or host  Ziti services when application does not manage its own sockets.
+
+    Most application won't open sockets directly but will use a library or a framework to do the low level
+    networking work for it.
+    `openziti.monkeypatch()` make it possible to use Ziti sockets when you don't have access or want to modify
+    the code opening sockets or connections.
+
+        Typical usage:
+
+        import openziti, requests
+        with openziti.monkeypatch():
+            r = requests.get('http://httpbin.ziti/json')
+            print(r.headers)
+            print(r.json())
+    """
     def __init__(self, **kwargs):
         self.orig_socket = sock.socket
         sock.socket = _patchedSocket(kwargs)
@@ -46,6 +62,15 @@ class MonkeyPatch():
 
 
 def zitify(**zkwargs):
+    """Decorate a function to monkeypatch its execution with openziti.
+
+    Sample usage:
+
+    @openziti.zitify()
+    def do_get(url):
+        r = requests.get(url)
+        return r.json()
+    """
     def zitify_func(func):
         def zitified(*args, **kwargs):
             with MonkeyPatch(**zkwargs):
