@@ -24,6 +24,8 @@ class ZitiSocket(PySocket):
         zitilib.init()
         if opts is None:
             opts = {}
+        if opts.get('bindings') is None:
+            opts['bindings'] = {}
         self._bind_address = None
         self._ziti_opts = opts
         self._ziti_af = af
@@ -49,22 +51,25 @@ class ZitiSocket(PySocket):
             except:
                 PySocket.close(self)
                 self._zitifd = None
-                PySocket.__init__(self, self._ziti_af, self._ziti_type,
-                                  self._ziti_proto)
+                PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
                 PySocket.connect(self, addr)
 
     def bind(self, addr) -> None:
         self._bind_address = addr
         bindings = self._ziti_opts['bindings']
         cfg = bindings.get(addr)
-        if cfg is None:
-            raise RuntimeError(f'no ziti binding for {addr}')
-        ztx = context.get_context(cfg['ztx'])
-        service = cfg['service']
-        terminator = None
-        if isinstance(service, tuple):
-            service,terminator = service
-        ztx.bind(service=service, terminator=terminator, sock=self)
+        if cfg is not None:
+            ztx = context.get_context(cfg['ztx'])
+            service = cfg['service']
+            terminator = None
+            if isinstance(service, tuple):
+                service,terminator = service
+            ztx.bind(service=service, terminator=terminator, sock=self)
+        else:
+            PySocket.close(self)
+            self._zitifd = None
+            PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
+            PySocket.bind(self, addr)
 
     def getsockname(self):
         # return this for now since frameworks expect something to be returned
