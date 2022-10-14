@@ -15,6 +15,7 @@
 import ctypes
 import os
 import platform
+import socket
 from typing import Tuple
 
 _mod_path = os.path.dirname(__file__)
@@ -37,6 +38,78 @@ class _Ver(ctypes.Structure):
 
     def __repr__(self):
         return f'({self.version}, {self.revision})'
+
+class SockAddrIn(ctypes.Structure):
+    """
+    maps struct sockaddr_in
+
+    NOTE: on Linux/Win32 the first two bytes are address family as short
+          on Darwin the first two bytes
+    """
+    _fields_ = [
+        ('_family', ctypes.c_uint8 * 2),
+        ('_port', ctypes.c_int16),
+        ('_addr', ctypes.c_uint8 * 4)
+    ]
+
+    def ip(self):
+        return '.'.join(str(o) for o in self._addr)
+
+    def af(self):
+        fam = self._family[0]
+        if osname == 'darwin':
+            fam = self._family[1]
+        return socket.AddressFamily(fam)
+
+    @property
+    def port(self):
+        return socket.ntohs(self._port)
+    def __repr__(self):
+        return f'{self.af().name}:{self.ip()}:{self.port}'
+
+
+class _AddrInfo(ctypes.Structure):
+    """
+    int ai_flags;			/* Input flags.  */
+    int ai_family;		/* Protocol family for socket.  */
+    int ai_socktype;		/* Socket type.  */
+    int ai_protocol;		/* Protocol for socket.  */
+    socklen_t ai_addrlen;		/* Length of socket address.  */
+    struct sockaddr *ai_addr;	/* Socket address for socket.  */
+    char *ai_canonname;		/* Canonical name for service location.  */
+    struct addrinfo *ai_next;	/* Pointer to next in list.  */
+
+    NOTE: the order of ai_addr and ai_canonname is switched on Dorwin and Windows compared to Linux
+    """
+    _fields_ = [
+        ('ai_flags', ctypes.c_int),
+        ('ai_family', ctypes.c_int),
+        ('ai_socktype', ctypes.c_int),
+        ('ai_protocol', ctypes.c_int),
+        ('ai_addrlen', ctypes.c_int32),
+        ('ai_p1', ctypes.c_void_p),
+        ('ai_p2', ctypes.c_void_p),
+        ('ai_next', ctypes.c_void_p)
+    ]
+
+    def get_addr(self):
+        addr_p = self.ai_p2
+        if osname == 'linux':
+            addr_p = self.ai_p1
+        if addr_p is None:
+            return None
+        return SockAddrIn.from_address(addr_p)
+
+    def get_canonname(self):
+        p = self.ai_p1
+        if osname == 'linux':
+            p = self.ai_p2
+        if p is None:
+            return None
+        return str(ctypes.cast(p, ctypes.c_char_p))
+
+    def __repr__(self):
+        return '|'.join((x[0] + '=' + str(getattr(self,x[0]))) for x in _AddrInfo._fields_)
 
 
 _ziti_version = ziti.ziti_get_version
@@ -89,6 +162,14 @@ _ziti_enroll.argtypes = [
         ctypes.POINTER(ctypes.c_size_t)
 ]
 _ziti_enroll.restype = ctypes.c_int
+
+_ziti_resolve = ziti.Ziti_resolve
+_ziti_resolve.argtypes = [
+    ctypes.c_char_p,
+    ctypes.c_char_p,
+    ctypes.POINTER(_AddrInfo),
+    ctypes.c_void_p
+]
 
 def free_win32(arg):
     pass
@@ -190,3 +271,38 @@ def enroll(jwt, key=None, cert=None):
         return id_json.value.decode()
     finally:
         _free(id_json)
+
+
+def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    if not isinstance(host, bytes):
+        host = bytes(str(host), 'utf-8')
+    if not isinstance(port, bytes):
+        port = bytes(str(port), 'utf-8')
+
+    hints = _AddrInfo(ai_family=family, ai_socktype=type, ai_protocol=proto, ai_flags=flags)
+    addr_p = ctypes.c_void_p()
+    rc = _ziti_resolve(host, port, hints, ctypes.byref(addr_p))
+
+    if rc != 0:
+        return None
+
+    addr_p = addr_p.value
+    result = []
+    while addr_p:
+        addr = _AddrInfo.from_address(addr_p)
+        addr_in = addr.get_addr()
+        try:
+            af = socket.AddressFamily(addr.ai_family)
+        except:
+            af = addr.ai_family
+        try:
+            t = socket.SocketKind(addr.ai_socktype)
+        except:
+            t = addr.ai_socktype
+
+        a = (af, t, addr.ai_protocol, addr.get_canonname(), (addr_in.ip(), addr_in.port))
+        result.append(a)
+        addr_p = addr.ai_next
+
+
+    return result

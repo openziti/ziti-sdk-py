@@ -12,6 +12,7 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 import socket
+from socket import getaddrinfo as PyGetaddrinfo
 from socket import socket as PySocket
 from typing import Tuple
 
@@ -97,10 +98,8 @@ def create_ziti_connection(address, **_):
     sock.connect(address)
     return sock
 
-
 def ziti_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
-    # pylint: disable=unused-argument,redefined-builtin
-    # pylint: disable=protected-access,no-member
-    return [(socket._intenum_converter(socket.AF_INET, socket.AddressFamily),
-             socket._intenum_converter(type, socket.SocketKind),
-             proto, '', (host, port))]
+    addrs = zitilib.getaddrinfo(host, port, family, type, proto, flags)
+    if addrs is None:
+        addrs = PyGetaddrinfo(host, port, family, type, proto, flags)
+    return addrs
