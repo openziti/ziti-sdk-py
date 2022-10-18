@@ -48,7 +48,7 @@ class SockAddrIn(ctypes.Structure):
     """
     _fields_ = [
         ('_family', ctypes.c_uint8 * 2),
-        ('_port', ctypes.c_int16),
+        ('_port', ctypes.c_uint16),
         ('_addr', ctypes.c_uint8 * 4)
     ]
 
