@@ -39,3 +39,18 @@ class TestZitiModule(unittest.TestCase):
         with self.assertRaises(ConnectionError):
             get_httpbin('http://httpbin.ziti/json')
 
+    def test_resolve(selfs):
+        with openziti.monkeypatch():
+            import socket
+            addrlist = socket.getaddrinfo(host='httpbin.ziti', port=80, type=socket.SOCK_STREAM)
+            assert len(addrlist) == 1
+            af, socktype, proto, name, addr = addrlist[0]
+            assert af == socket.AF_INET
+            assert socktype == socket.SOCK_STREAM
+            assert proto == socket.IPPROTO_TCP
+            assert isinstance(addr, tuple)
+            assert isinstance(addr[0], str)
+            assert isinstance(addr[1], int)
+            assert addr[1] == 80
+            assert addr[0].startswith('100.64.0.')
+
