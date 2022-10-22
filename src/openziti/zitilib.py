@@ -30,7 +30,8 @@ elif osname == 'windows':
 else:
     raise ImportError("could not load ziti shared library")
 
-ziti = ctypes.CDLL(_mod_path + f'/lib/{LIBNAME}')
+zitilib_path = _mod_path + f'/lib/{LIBNAME}'
+ziti = ctypes.CDLL(zitilib_path)
 
 
 class _Ver(ctypes.Structure):
@@ -125,9 +126,15 @@ _load_ctx = ziti.Ziti_load_context
 _load_ctx.argtypes = [ctypes.POINTER(ctypes.c_char), ]
 _load_ctx.restype = ctypes.c_void_p
 
-ziti_socket = ziti.Ziti_socket
-ziti_socket.argtypes = [ctypes.c_int]
-ziti_socket.restype = ctypes.c_int
+_ziti_socket = ziti.Ziti_socket
+_ziti_socket.argtypes = [ctypes.c_int]
+_ziti_socket.restype = ctypes.c_int
+
+
+_ziti_close = ziti.Ziti_close
+_ziti_close.restype = None
+_ziti_close.argtypes = [ctypes.c_int]
+
 
 _ziti_connect = ziti.Ziti_connect
 _ziti_connect.argtypes = [ctypes.c_int, # socket fd
@@ -202,6 +209,15 @@ def check_error(code):
 
 def init():
     ziti.Ziti_lib_init()
+
+
+def ziti_socket(type):
+    fd = _ziti_socket(type)
+    return fd
+
+
+def ziti_close(fd):
+    _ziti_close(fd)
 
 
 def shutdown():

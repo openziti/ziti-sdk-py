@@ -55,6 +55,15 @@ class ZitiSocket(PySocket):
                 PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
                 PySocket.connect(self, addr)
 
+
+    def close(self):
+        zitifd = getattr(self, '_zitifd')
+        print(f'closing {zitifd}')
+        if zitifd:
+            zitilib.ziti_close(zitifd)
+        else:
+            super().close()
+
     def bind(self, addr) -> None:
         self._bind_address = addr
         bindings = self._ziti_opts['bindings']
