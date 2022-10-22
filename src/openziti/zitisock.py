@@ -58,7 +58,6 @@ class ZitiSocket(PySocket):
 
     def close(self):
         zitifd = getattr(self, '_zitifd')
-        print(f'closing {zitifd}')
         if zitifd:
             zitilib.ziti_close(zitifd)
         else:
