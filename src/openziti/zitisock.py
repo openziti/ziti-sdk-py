@@ -11,12 +11,13 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
+
 import socket
 from socket import getaddrinfo as PyGetaddrinfo
 from socket import socket as PySocket
-from typing import Tuple
+from typing import Tuple, Union
 
-from . import zitilib, context
+from . import context, zitilib
 
 
 class ZitiSocket(PySocket):
@@ -45,8 +46,7 @@ class ZitiSocket(PySocket):
     def connect(self, addr) -> None:
         if self._zitifd is None:
             pass
-
-        if isinstance(addr, Tuple):
+        if isinstance(addr, tuple):
             try:
                 zitilib.connect_addr(self._zitifd, addr)
             except:
@@ -55,8 +55,7 @@ class ZitiSocket(PySocket):
                 PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
                 PySocket.connect(self, addr)
 
-
-    def close(self):
+    def close(self) -> None:
         zitifd = getattr(self, '_zitifd')
         if zitifd:
             zitilib.ziti_close(zitifd)
@@ -72,7 +71,7 @@ class ZitiSocket(PySocket):
             service = cfg['service']
             terminator = None
             if isinstance(service, tuple):
-                service,terminator = service
+                service, terminator = service
             ztx.bind(service=service, terminator=terminator, sock=self)
         else:
             PySocket.close(self)
@@ -80,7 +79,7 @@ class ZitiSocket(PySocket):
             PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
             PySocket.bind(self, addr)
 
-    def getsockname(self):
+    def getsockname(self) -> Tuple['str', int]:
         # return this for now since frameworks expect something to be returned
         return ('127.0.0.1', 0)
 
@@ -94,7 +93,7 @@ class ZitiSocket(PySocket):
         fd, peer = zitilib.accept(self.fileno())
         return ZitiSocket(af=self._ziti_af, type=self._ziti_type, fileno=fd), peer
 
-    def setsockopt(self, __level, __optname, __value) -> None:
+    def setsockopt(self, __level: int, __optname: int, __value: Union[int, bytes]) -> None:
         try:
             PySocket.setsockopt(self, __level, __optname, __value)
         except:
@@ -106,7 +105,9 @@ def create_ziti_connection(address, **_):
     sock.connect(address)
     return sock
 
+
 def ziti_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    # pylint: disable=redefined-builtin
     addrs = zitilib.getaddrinfo(host, port, family, type, proto, flags)
     if addrs is None:
         addrs = PyGetaddrinfo(host, port, family, type, proto, flags)
