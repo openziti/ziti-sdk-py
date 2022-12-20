@@ -47,8 +47,10 @@ class SockAddrIn(ctypes.Structure):
     """
     maps struct sockaddr_in
 
-    NOTE: on Linux/Win32 the first two bytes are address family as short
-          on Darwin the first two bytes
+    NOTE:
+    -----
+    On Linux/Win32 the first two bytes are address family as short,
+    on Darwin the first two bytes.
     """
     _fields_ = [
         ('_family', ctypes.c_uint8 * 2),
@@ -83,8 +85,10 @@ class _AddrInfo(ctypes.Structure):
     char *ai_canonname;        /* Canonical name for service location. */
     struct addrinfo *ai_next;  /* Pointer to next in list. */
 
-    NOTE: the order of ai_addr and ai_canonname is switched
-          on Darwin and Windows compared to Linux
+    NOTE:
+    -----
+    The order of ai_addr and ai_canonname is switched on
+    Darwin and Windows compared to Linux.
     """
     _fields_ = [
         ('ai_flags', ctypes.c_int),
