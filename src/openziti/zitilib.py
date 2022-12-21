@@ -12,11 +12,13 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+# pylint: disable=no-member
+
 import ctypes
 import os
 import platform
 import socket
-from typing import Tuple
+from typing import Optional, Tuple
 
 _mod_path = os.path.dirname(__file__)
 osname = platform.system().lower()
@@ -40,12 +42,15 @@ class _Ver(ctypes.Structure):
     def __repr__(self):
         return f'({self.version}, {self.revision})'
 
+
 class SockAddrIn(ctypes.Structure):
     """
     maps struct sockaddr_in
 
-    NOTE: on Linux/Win32 the first two bytes are address family as short
-          on Darwin the first two bytes
+    NOTE:
+    -----
+    On Linux/Win32 the first two bytes are address family as short,
+    on Darwin the first two bytes.
     """
     _fields_ = [
         ('_family', ctypes.c_uint8 * 2),
@@ -71,16 +76,19 @@ class SockAddrIn(ctypes.Structure):
 
 class _AddrInfo(ctypes.Structure):
     """
-    int ai_flags;			/* Input flags.  */
-    int ai_family;		/* Protocol family for socket.  */
-    int ai_socktype;		/* Socket type.  */
-    int ai_protocol;		/* Protocol for socket.  */
-    socklen_t ai_addrlen;		/* Length of socket address.  */
-    struct sockaddr *ai_addr;	/* Socket address for socket.  */
-    char *ai_canonname;		/* Canonical name for service location.  */
-    struct addrinfo *ai_next;	/* Pointer to next in list.  */
+    int ai_flags;              /* Input flags. */
+    int ai_family;             /* Protocol family for socket. */
+    int ai_socktype;           /* Socket type. */
+    int ai_protocol;           /* Protocol for socket. */
+    socklen_t ai_addrlen;      /* Length of socket address. */
+    struct sockaddr *ai_addr;  /* Socket address for socket. */
+    char *ai_canonname;        /* Canonical name for service location. */
+    struct addrinfo *ai_next;  /* Pointer to next in list. */
 
-    NOTE: the order of ai_addr and ai_canonname is switched on Dorwin and Windows compared to Linux
+    NOTE:
+    -----
+    The order of ai_addr and ai_canonname is switched on
+    Darwin and Windows compared to Linux.
     """
     _fields_ = [
         ('ai_flags', ctypes.c_int),
@@ -110,7 +118,8 @@ class _AddrInfo(ctypes.Structure):
         return str(ctypes.cast(p, ctypes.c_char_p))
 
     def __repr__(self):
-        return '|'.join((x[0] + '=' + str(getattr(self,x[0]))) for x in _AddrInfo._fields_)
+        return '|'.join((x[0] + '=' + str(getattr(self, x[0])))
+                        for x in _AddrInfo._fields_)
 
 
 _ziti_version = ziti.ziti_get_version
@@ -137,10 +146,10 @@ _ziti_close.argtypes = [ctypes.c_int]
 
 
 _ziti_connect = ziti.Ziti_connect
-_ziti_connect.argtypes = [ctypes.c_int, # socket fd
-                          ctypes.c_void_p, # zitt context
-                          ctypes.c_char_p, # service
-                          ctypes.c_char_p # terminator
+_ziti_connect.argtypes = [ctypes.c_int,     # socket fd
+                          ctypes.c_void_p,  # zitt context
+                          ctypes.c_char_p,  # service
+                          ctypes.c_char_p   # terminator
                           ]
 
 _ziti_connect_addr = ziti.Ziti_connect_addr
@@ -148,10 +157,10 @@ _ziti_connect_addr.argtypes = [ctypes.c_int, ctypes.c_char_p, ctypes.c_int]
 _ziti_connect_addr.restype = ctypes.c_int
 
 _ziti_bind = ziti.Ziti_bind
-_ziti_bind.argtypes = [ctypes.c_int, # socket fd
-                       ctypes.c_void_p, # ziti context
-                       ctypes.c_char_p, # service
-                       ctypes.c_char_p # terminator
+_ziti_bind.argtypes = [ctypes.c_int,     # socket fd
+                       ctypes.c_void_p,  # ziti context
+                       ctypes.c_char_p,  # service
+                       ctypes.c_char_p   # terminator
                        ]
 
 _ziti_listen = ziti.Ziti_listen
@@ -178,14 +187,17 @@ _ziti_resolve.argtypes = [
     ctypes.c_void_p
 ]
 
-def free_win32(arg):
+
+def free_win32(_):
     pass
+
 
 if osname != 'windows':
     _free = ziti.free
     _free.argtypes = [ctypes.c_void_p]
 else:
     _free = free_win32
+
 
 def version():
     ver = _ziti_version().contents
@@ -230,10 +242,11 @@ def load(path):
     return _load_ctx(b_obj)
 
 
-def connect(fd, ztx, service: str, terminator: str = None):
+def connect(fd, ztx, service: str, terminator: Optional[str] = None):
     srv = bytes(service, encoding='utf-8')
-    terminator = bytes(terminator, encoding='utf-8')
-    check_error(_ziti_connect(fd, ztx, srv, terminator))
+    if terminator:
+        terminator_b = bytes(terminator, encoding='utf-8')
+    check_error(_ziti_connect(fd, ztx, srv, terminator_b))
 
 
 def connect_addr(fd, addr: Tuple[str, int]):
@@ -242,11 +255,11 @@ def connect_addr(fd, addr: Tuple[str, int]):
     check_error(_ziti_connect_addr(fd, host, port))
 
 
-def bind(fd, ztx, service: str, terminator: str = None):
+def bind(fd, ztx, service: str, terminator: Optional[str] = None):
     srv = bytes(service, encoding='utf-8')
     if terminator:
-        terminator = bytes(terminator, encoding='utf-8')
-    check_error(_ziti_bind(fd, ztx, srv, terminator))
+        terminator_b = bytes(terminator, encoding='utf-8')
+    check_error(_ziti_bind(fd, ztx, srv, terminator_b))
 
 
 def listen(fd, backlog):
@@ -264,9 +277,13 @@ def accept(fd):
 def enroll(jwt, key=None, cert=None):
     """
     Enroll Ziti Identity
-    :param jwt: (required) enrollment token, can be either name of the token file or a string containing JWT
-    :param key: private key to use for enrollment (required for 3rd party CA enrollment, otherwise optional, new key is generated if None)
-    :param cert: certificate to use for enrollment (required for 3rd party CA enrollment)
+    :param jwt: (required) enrollment token,
+        can be either name of the token file or a string containing JWT
+    :param key: private key to use for enrollment
+        (required for 3rd party CA enrollment, otherwise optional,
+        new key is generated if None)
+    :param cert: certificate to use for enrollment
+        (required for 3rd party CA enrollment)
     :return: string containing Ziti Identity in JSON format
     """
     init()
@@ -290,6 +307,7 @@ def enroll(jwt, key=None, cert=None):
 
 
 def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
+    # pylint: disable=redefined-builtin
     if not isinstance(host, bytes):
         host = bytes(str(host), 'utf-8')
     if not isinstance(port, bytes):
@@ -319,6 +337,5 @@ def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
         a = (af, t, addr.ai_protocol, addr.get_canonname(), (addr_in.ip(), addr_in.port))
         result.append(a)
         addr_p = addr.ai_next
-
 
     return result

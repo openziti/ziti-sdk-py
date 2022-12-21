@@ -30,12 +30,15 @@ def _patchedSocket(patch_opts):
 
 class MonkeyPatch:
     """
-    Monkeypatch allow to connect to or host  Ziti services when application does not manage its own sockets.
+    Monkeypatch allow to connect to or host Ziti services
+    when application does not manage its own sockets.
 
-    Most application won't open sockets directly but will use a library or a framework to do the low level
-    networking work for it.
-    `openziti.monkeypatch()` make it possible to use Ziti sockets when you don't have access or want to modify
-    the code opening sockets or connections.
+    Most application won't open sockets directly but will use a library
+    or a framework to do the low level networking work for it.
+
+    `openziti.monkeypatch()` makes it possible to use Ziti sockets
+    when you don't have access or want to modify the code
+    opening sockets or connections.
 
         Typical usage:
 

@@ -30,10 +30,13 @@ class ZitiContext:
     def connect(self, addr, terminator=None):
         """
         Connect to a Ziti service.
-        Either service name or intercept address(host,port) could be used to connect to service.
+        Either service name or intercept address(host,port)
+        could be used to connect to service.
 
-        :param addr: service name (string) or service intercept address(tuple[host, port])
-        :param terminator: specific terminator for the given service, ignored is [addr] is an intercept address
+        :param addr: service name (string) or
+            service intercept address(tuple[host, port])
+        :param terminator: specific terminator for the given service,
+            ignored if [addr] is an intercept address
         :return: socket connected to the service
         """
         fd = zitilib.ziti_socket(socket.SOCK_STREAM)
