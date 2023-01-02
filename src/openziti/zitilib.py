@@ -244,6 +244,7 @@ def load(path):
 
 def connect(fd, ztx, service: str, terminator: Optional[str] = None):
     srv = bytes(service, encoding='utf-8')
+    terminator_b = None
     if terminator:
         terminator_b = bytes(terminator, encoding='utf-8')
     check_error(_ziti_connect(fd, ztx, srv, terminator_b))
@@ -257,6 +258,7 @@ def connect_addr(fd, addr: Tuple[str, int]):
 
 def bind(fd, ztx, service: str, terminator: Optional[str] = None):
     srv = bytes(service, encoding='utf-8')
+    terminator_b = None
     if terminator:
         terminator_b = bytes(terminator, encoding='utf-8')
     check_error(_ziti_bind(fd, ztx, srv, terminator_b))
