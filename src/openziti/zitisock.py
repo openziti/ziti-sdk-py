@@ -56,11 +56,12 @@ class ZitiSocket(PySocket):
                 PySocket.connect(self, addr)
 
     def close(self) -> None:
-        zitifd = getattr(self, '_zitifd')
-        if zitifd:
-            zitilib.ziti_close(zitifd)
-        else:
+        try:
+            zitifd = getattr(self, '_zitifd')
+        except AttributeError:
             super().close()
+        else:
+            zitilib.ziti_close(zitifd)
 
     def bind(self, addr) -> None:
         self._bind_address = addr
