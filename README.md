@@ -69,7 +69,7 @@ def yourFunction():
 ```
 ## Examples
 Try it out yourself with one of our examples
-* [Flask](sample/flask-of-ziti)
+* [Flazk](sample/flask-of-ziti)
 * [HZTP](sample/h-ziti-p)
 * [HTTP GET](sample/http-get)
 * [Echo Server](sample/ziti-echo-server)

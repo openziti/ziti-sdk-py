@@ -1,4 +1,4 @@
-# Hello Flazk <img align="right" src="../../images/flask-logo-text.jpeg" width="20%">
+# Hello Flazk <img align="right" src="../../images/python-flask-text.png" width="20%">
 This example shows the simplicity in integrating zero trust into a web server or API using Flask. This example also 
 shows how to use the decorator to apply the monkeypatch.
 
