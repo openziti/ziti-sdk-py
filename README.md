@@ -68,7 +68,7 @@ Or try our decorator pattern with a function annotation
 def yourFunction():
 ```
 ## Examples
-Try it out yourself with one of our [examples]([README.md#python-sdk-for-openziti-examples](sample%2FREADME.md))
+Try it out yourself with one of our [examples](sample%2FREADME.md)
 * [Flazk](sample/flask-of-ziti)
 * [HZTP](sample/h-ziti-p)
 * [HTTP GET](sample/http-get)

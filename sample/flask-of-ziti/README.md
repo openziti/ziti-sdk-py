@@ -8,7 +8,7 @@ offer complete encryption from app to app, no unencrypted data ever leaves the a
 ![ztaa-model-flazk.png](..%2F..%2Fimages%2Fztaa-model-flazk.png)
 
 ## Setup :wrench:
-Refer to the [Examples README]([README.md#python-sdk-for-openziti-examples](sample%2FREADME.md)) for details on setting up your network, service, and obtaining an identity 
+Refer to the [examples README](../README.md) for details on setting up your network, service, and obtaining an identity 
 file.
 
 ## Running the Example :arrow_forward:
