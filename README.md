@@ -69,7 +69,7 @@ openziti.monkeypatch(bindings={(hostName, serverPort): cfg})
 ## Examples
 Try it out yourself with one of our examples
 * [Flask](./sample/flask-of-ziti)
-* [H-Ziti-P](./sample/h-ziti-p.py)
+* [HZTP](./sample/h-ziti-p.py)
 * [HTTP GET](./sample/http-get.py)
 * [Echo Server](./sample/ziti-echo-server.py)
 * [HTTP Server](./sample/ziti-http-server.py)
