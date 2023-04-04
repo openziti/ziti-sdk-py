@@ -42,7 +42,7 @@ that are already implemented in the developer sandbox.
 
 ## Examples
 > **Note**
-> All but the Flazk sample scripts use predefined services in [ZEDS](https://zeds.openziti.org) by default.
+> All but the Flazk example scripts use predefined services in [ZEDS](https://zeds.openziti.org) by default.
 
 ### [Flazk](flask-of-ziti) <img src="../images/python-flask.jpg" width="2%">
 An example showing the simplicity in integrating zero trust into a web server or API using Flask. This example also 
