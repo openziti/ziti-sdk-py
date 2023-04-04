@@ -4,6 +4,25 @@
 
 # Ziti SDK for Python
 :star: Star us on GitHub!
+<p align="center">
+  <a href="https://openziti.discourse.group/">
+    <img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fopenziti.discourse.group%2F" alt="Discourse">
+  </a>
+  <a href="https://pypi.org/project/openziti/">
+    <img src="https://img.shields.io/pypi/dd/openziti" alt="Downloads">
+  </a>
+  <a href="https://opensource.org/licenses/Apache-2.0">
+    <img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License">
+  </a>
+</p>
+
+<p align="center">
+  <a href="#getting-started">Getting Started</a> •
+  <a href="#examples">Examples</a> •
+  <a href="#support">Support</a> •
+  <a href="#contributing">Contributing</a> •
+  <a href="#license">License</a>
+</p>
 
 <img src="./images/Ziggy-Loves-Python.svg" align="right" alt="ziggy-loves-python" width="15%">
 
@@ -25,7 +44,7 @@ to set up the Ziti network that fits your needs. Or, you can try a NetFoundry ho
 
 ### Installing the SDK
 
-Ziti SDK for Python is distributed via the Python Package Index (PyPI) and can be installed using PIP.
+Ziti SDK for Python is distributed via the Python Package Index (PyPI) and can be installed using [`pip`](https://pypi.org/project/openziti/).
 
 ```shell
 pip install openziti
@@ -47,7 +66,7 @@ cfg = dict(
 )
 openziti.monkeypatch(bindings={(hostName, serverPort): cfg})
 ```
-### Examples
+## Examples
 Try it out yourself with one of our examples
 * [Flask](./sample/flask-of-ziti)
 * [H-Ziti-P](./sample/h-ziti-p.py)
@@ -64,8 +83,8 @@ for tracking bugs and feature requests and have limited bandwidth to address the
 - Read the [offical docs](https://docs.openziti.io/docs/learn/introduction/)
 - Join our [Developer Community](https://openziti.org)
 - Participate in discussion on [Discourse](https://openziti.discourse.group/)
-### Contributing
+## Contributing
 Do you want to get your hands dirty and help make OpenZiti better? Contribute to the OpenZiti open-source project 
 through bug reports, bug fixes, documentation, etc. Check out our guide on contributing to our projects [here](https://docs.openziti.io/policies/CONTRIBUTING.html).
-
-Copyright&copy; 2018-2023. NetFoundry, Inc.
+## License
+[Apache 2.0](./LICENSE)
