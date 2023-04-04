@@ -1,2 +1,6 @@
 openziti
 requests
+flask
+waitress
+urllib3
+setuptools

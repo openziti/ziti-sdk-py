@@ -1,4 +1,4 @@
-#  Copyright (c) 2022.  NetFoundry, Inc.
+#  Copyright NetFoundry Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -12,11 +12,28 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
+import sys
 import openziti
-import requests
+
+
+def run(ziti_id, service):
+    ztx = openziti.load(ziti_id)
+    server = ztx.bind(service)
+    server.listen()
+
+    while True:
+        conn, peer = server.accept()
+        print(f'processing incoming client[{peer}]')
+        with conn:
+            count = 0
+            while True:
+                data = conn.recv(1024)
+                if not data:
+                    print(f'client finished after sending {count} bytes')
+                    break
+                count += len(data)
+                conn.sendall(data)
+
 
 if __name__ == '__main__':
-    with openziti.monkeypatch():
-        r = requests.get('http://httpbin.ziti/json')
-        print(r.headers)
-        print(r.json())
+    run(sys.argv[1], sys.argv[2])
