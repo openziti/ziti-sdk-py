@@ -70,7 +70,7 @@ is captured, a response with a simple JSON document is sent to clients.
 An example showing the use of Ziti monkey patching a standard socket, via the requests module, to intercept network 
 connections using Ziti overlay.
 
-### [Ziti Socket](ziti-socket-example)
+### [Ziti Socket](ziti-socket)
 An example showing the use of a _raw_ Ziti socket.
 
 ### [Ziti urllib3](ziti-urllib3)

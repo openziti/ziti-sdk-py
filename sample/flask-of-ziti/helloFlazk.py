@@ -32,6 +32,10 @@ def runApp():
 def hello_world():  # put application's code here
     return 'Have some Ziti!'
 
+@app.route('/json')
+def get_json():
+    return '{ "name":"Ziti", "message":"Have some JSON Ziti"}'
+
 
 if __name__ == '__main__':
     bind_opts['ztx'] = sys.argv[1]
