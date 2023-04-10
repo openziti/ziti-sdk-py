@@ -3,10 +3,12 @@
 </a>
 
 # Python SDK for OpenZiti
-:star: Star OpenZiti on GitHub [![OpenZiti github stars badge](https://img.shields.io/github/stars/openziti/ziti?style=flat)](https://github.com/openziti/ziti/stargazers)
 <p align="center">
   <a href="https://openziti.discourse.group/">
-    <img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fopenziti.discourse.group%2F" alt="Discourse">
+    <img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fopenziti.discourse.group" alt="Discourse">
+  </a>
+  <a href="https://github.com/openziti/ziti-sdk-py">
+    <img src="https://img.shields.io/github/stars/openziti/ziti-sdk-py" alt="GitHub Stars"
   </a>
   <a href="https://pypi.org/project/openziti/">
     <img src="https://img.shields.io/pypi/dd/openziti" alt="Downloads">
@@ -26,22 +28,23 @@
 
 <img src="./images/Ziggy-Loves-Python.svg" align="right" alt="ziggy-loves-python" width="15%">
 
-The Python SDK for OpenZiti is a library that enables you to integrate zero trust network connectivity into your Python 
+The Python SDK for [OpenZiti](https://github.com/openziti/ziti) is a library that enables you to integrate zero trust network connectivity into your Python 
 applications, and establish secure connections with remote network resources over an OpenZiti network. The SDK also 
 simplifies the process of adding secure, zero-trust network connectivity built into your Python application. It's so 
-simple that it can be done in just two lines of code.
+simple that it can be done in just two lines of code!
 
 OpenZiti is an open-source project that provides secure, zero-trust networking for applications running on any platform.
 
 More specifically, the SDK allows you to integrate zero trust at the application level. This means your data is never 
-exposed outside the application environment providing you with end-to-end encryption for ultimate security.
+exposed outside the application environment providing you with end-to-end encryption for ultimate security. See other 
+zero trust models [here](https://docs.openziti.io/docs/learn/core-concepts/zero-trust-models/overview).
 <p align="center">
 <img src="./images/ztaa-model-overview.png" alt="Zero-trust-application-access">
 </p>
 
 ## Getting Started
 If you don't already have an OpenZiti network running, you can follow our [express install guides](https://docs.openziti.io/docs/learn/quickstarts/network/) 
-to set up the network that fits your needs. Or, you can try cloud Ziti for free, check out more [here](https://docs.openziti.io/).
+to set up the network that fits your needs. Or, you can try [CloudZiti](https://netfoundry.io/pricing/) for free, check out more [here](https://docs.openziti.io/).
 
 ### Installing the SDK
 
@@ -56,8 +59,34 @@ pip install openziti
 With just two lines of code, you can turn your plain old web server into a secure, zero-trust embedded application. 
 Below is an example of just how simple it is to get started.
 
-Provide a hostname, and port for your application, a simple monkeypatch, and you're ready to go. You don't even need to 
-know what a monkeypatch is!
+Provide a hostname, and port for your application, a simple monkey patch, and you're ready to go. You don't even need to 
+know what a monkey patch is! However, if you're interested in what a monkey patch is, expand the block below.
+<details>
+   <summary>What is Monkey Patching?</summary>
+
+   > Monkey patching allows developers to modify functionality for code even when they may not have access to the 
+   > original source code. Because Python has a dynamic object model allowing developers to modify objects at runtime. 
+   > Monkey patching allows developers to point a function call to any function they want. We can even implement our 
+   > own function that doesn't exist in the source code.
+   > 
+   > The way this Python SDK uses monkey patching is to override existing functionality in socket handling by the 
+   > [socket module](https://docs.python.org/3/library/socket.html).
+   > 
+   > Taking a look at the code below, the key lines are the last two. You can see how, for each monkey patched function, 
+   > we're telling that function call on the `sock` object to be directed to the function held in `_patch_methods`. 
+   > Therefore, this SDK can be used on any application that doesn't manage its own sockets.
+   > ```python
+   > def __init__(self, **kwargs):
+   >     self.orig_socket = sock.socket
+   >     sock.socket = _patchedSocket(kwargs)
+   >     self.orig_methods = {m: sock.__dict__[m] for m, _ in
+   >                          _patch_methods.items()}
+   >     for m_name, _ in _patch_methods.items():
+   >         sock.__dict__[m_name] = _patch_methods[m_name]
+   > ```
+
+   </details>
+
 ```python
 cfg = dict(ztx=openziti.load('/path/to/identity.json'), service="name-of-ziti-service")
 openziti.monkeypatch(bindings={('127.0.0.1', 8000): cfg})
@@ -70,11 +99,11 @@ def yourFunction():
 ## Examples
 Try it out yourself with one of our [examples](sample%2FREADME.md)
 * [Flazk](sample/flask-of-ziti)
-* [HZTP](sample/h-ziti-p)
-* [HTTP GET](sample/http-get)
 * [Echo Server](sample/ziti-echo-server)
 * [HTTP Server](sample/ziti-http-server)
+* [Ziti Requests](sample/ziti-requests)
 * [Ziti Socket](sample/ziti-socket-example)
+* [Ziti urllib3](sample/ziti-urllib3)
 
 ## Support
 ### Looking for Help?
