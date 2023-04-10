@@ -5,6 +5,15 @@
 In order to begin using the examples, you'll need an OpenZiti network. If you don't already have one running, you can follow our [express install guides](https://docs.openziti.io/docs/learn/quickstarts/network/) 
 to set up the network that fits your needs. You could also use [ZEDS](https://zeds.openziti.org) (Ziti Edge Developer Sandbox) or, you can try cloud Ziti for free, check out more [here](https://docs.openziti.io/).
 
+### Installing the SDK
+
+The Python SDK for OpenZiti is distributed via the Python Package Index (PyPI) and can be installed using 
+[`pip`](https://pypi.org/project/openziti/) package manager.
+
+```shell
+pip install openziti
+```
+
 ### Install Python Requirements
 First, you'll need the dependent libraries used in the examples.
   ```bash
@@ -29,7 +38,7 @@ more than one identity file, you can use the `;` operator as a delimiter to prov
   export ZITI_IDENTITIES=</path/to/id.json>
   ```
 
-There is an optional environment variable `ZITI_LOG` which, by default is set to `3`. This value can be adjusted to 
+There is an optional environment variable `ZITI_LOG` which, by default is set to `1`. This value can be adjusted to 
 output more or less log information. A `ZITI_LOG` level of `6` will output `TRACE` level logs.
 
 ### Network
@@ -49,20 +58,20 @@ An example showing the simplicity in integrating zero trust into a web server or
 shows how to use the decorator to apply the monkeypatch.
 `flask-of-ziti/helloFlazk.py`
 
-### [HZTP](h-ziti-p)
-An example showing the use of Ziti monkeypatching standard socket to intercept network connections using Ziti overlay.
-
-### [HTTP-GET](http-get)
-An example showing how to monkeypatch `requests.get(url)` to fetch a Ziti service using HTTP.
-
 ### [Ziti Echo Server](ziti-echo-server)
 An example showing how to open a socket to listen on the network overlay for a particular service and send all bytes 
 received back to the sender.
 
 ### [Ziti HTTP Server](ziti-http-server)
-An example showing how to monkeypatch `http.server` to listen for requests on the network overlay. When a request is 
-captured, a response with a simple JSON document is sent to clients.
+An example showing how to monkeypatch `http.server` to listen for HTTP requests on the network overlay. When a request 
+is captured, a response with a simple JSON document is sent to clients.
+
+### [Ziti Requests](ziti-requests)
+An example showing the use of Ziti monkey patching a standard socket, via the requests module, to intercept network 
+connections using Ziti overlay.
 
 ### [Ziti Socket](ziti-socket-example)
 An example showing the use of a _raw_ Ziti socket.
 
+### [Ziti urllib3](ziti-urllib3)
+An example showing how to monkeypatch `urllib3` to fetch a Ziti service using HTTP.

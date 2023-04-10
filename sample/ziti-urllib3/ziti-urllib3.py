@@ -16,11 +16,6 @@ import sys
 import urllib3
 import openziti
 
-# to run this sample
-# set ZITI_IDENTITIES environment variable to location of your Ziti identity file
-#
-# python http-get.py <url>
-# url should be the intercept address of a ziti service
 if __name__ == '__main__':
     openziti.monkeypatch()
     http = urllib3.PoolManager()

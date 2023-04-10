@@ -20,8 +20,8 @@ hostName = "127.0.0.1"
 serverPort = 18080
 
 cfg = dict(
-    ztx=openziti.load('/Users/geoffberl/python.flask.json'),
-    service="python.flask"
+    ztx=sys.argv[1],
+    service=sys.argv[2]
 )
 openziti.monkeypatch(bindings={(hostName, serverPort): cfg})
 
