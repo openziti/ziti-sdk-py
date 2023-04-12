@@ -102,7 +102,7 @@ Try it out yourself with one of our [examples](sample%2FREADME.md)
 * [Echo Server](sample/ziti-echo-server)
 * [HTTP Server](sample/ziti-http-server)
 * [Ziti Requests](sample/ziti-requests)
-* [Ziti Socket](sample/ziti-socket-example)
+* [Ziti Socket](sample/ziti-socket)
 * [Ziti urllib3](sample/ziti-urllib3)
 
 ## Support

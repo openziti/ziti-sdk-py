@@ -14,10 +14,11 @@ If you haven't already installed them, you'll need the dependent libraries used 
   ```
 
 ## Running the Example :arrow_forward:
-This example accepts one _optional_ input argument.
+This example accepts two _optional_ input arguments.
 1. The intercept address to bind to (if none is provided, the `httpbin.ziti` service from ZEDs will be assumed)
+2. The intercept port to bind to (if none is provided, port `80` will be assumed)
 ```shell
-python ziti-requests.py <address-of-service>
+python ziti-socket.py <address-of-service> <service-port>
 ```
 This example also requires the identity file for binding to the service to be provided in the `ZITI_IDENTITIES` 
 environment variable.
@@ -36,7 +37,7 @@ python ziti-socket.py python.flask.ziti 80
 ```
 
 ### Example Output:
-Using a service called `python.echo.ziti` on port `80` here is what this would look like.
+Using a service called `python.flask.ziti` on port `80` here is what this would look like.
 ```shell
 $ python ziti-socket.py python.flask.ziti 80
 Ziti SDK version = (b'0.31.5', b'ccbc692')
