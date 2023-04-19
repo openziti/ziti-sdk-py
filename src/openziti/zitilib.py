@@ -297,7 +297,11 @@ def enroll(jwt, key=None, cert=None):
 
     id_json = ctypes.c_char_p()
     id_json_len = ctypes.c_size_t()
-    retcode = _ziti_enroll(jwtc, key, cert,
+
+    keyb = None if key is None else bytes(key, 'utf-8')
+    certb = None if cert is None else bytes(cert, 'utf-8')
+
+    retcode = _ziti_enroll(jwtc, keyb, certb,
                            ctypes.byref(id_json),
                            ctypes.byref(id_json_len))
     if retcode != 0:
