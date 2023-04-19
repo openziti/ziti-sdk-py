@@ -1,4 +1,4 @@
-#  Copyright (c)  NetFoundry Inc.
+#  Copyright NetFoundry Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -16,8 +16,8 @@ from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import openziti
 
-hostName = "localhost"
-serverPort = 8080
+hostName = "127.0.0.1"
+serverPort = 18080
 
 cfg = dict(
     ztx=sys.argv[1],

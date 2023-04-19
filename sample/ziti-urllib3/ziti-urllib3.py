@@ -12,32 +12,14 @@
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
 
-from flask import Flask
-import openziti
 import sys
-
-app = Flask(__name__)
-bind_opts = {}  # populated in main
-
-
-@openziti.zitify(bindings={
-    ('127.0.0.1', 18080): bind_opts
-})
-def runApp():
-    from waitress import serve
-    serve(app,host='127.0.0.1',port=18080)
-
-
-@app.route('/')
-def hello_world():  # put application's code here
-    return 'Have some Ziti!'
-
-@app.route('/json')
-def get_json():
-    return '{ "name":"Ziti", "message":"Have some JSON Ziti"}'
-
+import urllib3
+import openziti
 
 if __name__ == '__main__':
-    bind_opts['ztx'] = sys.argv[1]
-    bind_opts['service'] = sys.argv[2]
-    runApp()
+    openziti.monkeypatch()
+    http = urllib3.PoolManager()
+    r = http.request('GET', sys.argv[1])
+    print("{0} {1}".format(r.status, r.reason))
+    print(r.data.decode('utf-8'))
+
