@@ -229,7 +229,8 @@ def ziti_socket(type):
 
 
 def ziti_close(fd):
-    _ziti_close(fd)
+    if fd:
+        _ziti_close(fd)
 
 
 def shutdown():
