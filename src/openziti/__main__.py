@@ -23,6 +23,19 @@ def do_enroll():
         id_json = zitilib.enroll(jwt, key=args.key, cert=args.cert)
         id_file.write(bytes(id_json, 'utf-8'))
 
+def show_version():
+    from openziti._version import get_versions
+    modver = get_versions()
+    v = modver['version']
+    if args.verbose:
+        modrev = modver['full-revisionid']
+        version = zitilib.version()
+        ziti_ver = version.version.decode()
+        ziti_rev = version.revision.decode()
+        print(f'version: {v}@{modrev}')
+        print(f'ziti:    {ziti_ver}@{ziti_rev}')
+    else:
+        print(v)
 
 if __name__ == '__main__':
     import argparse
@@ -37,6 +50,10 @@ if __name__ == '__main__':
     enroll_cmd.add_argument('-k', '--key')
     enroll_cmd.add_argument('-c', '--cert')
     enroll_cmd.set_defaults(func=do_enroll)
+
+    version_cmd = subcommands.add_parser('version', help='show version')
+    version_cmd.set_defaults(func=show_version)
+    version_cmd.add_argument('-v', '--verbose', action='store_true')
 
     args = parser.parse_args()
     if args.subcommand is None:
