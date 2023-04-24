@@ -39,7 +39,7 @@ class TestZitiModule(unittest.TestCase):
         with self.assertRaises(ConnectionError):
             get_httpbin('http://httpbin.ziti/json')
 
-    def test_resolve(selfs):
+    def test_resolve(self):
         with openziti.monkeypatch():
             import socket
             addrlist = socket.getaddrinfo(host='httpbin.ziti', port=80, type=socket.SOCK_STREAM)
@@ -53,4 +53,13 @@ class TestZitiModule(unittest.TestCase):
             assert isinstance(addr[1], int)
             assert addr[1] == 80
             assert addr[0].startswith('100.64.0.')
+
+    def test_monkeypatch_bypass(self):
+        with openziti.monkeypatch():
+            from json import dumps
+            r = get_httpbin('http://httpbin.org/anything')
+            assert r.status_code == 200
+            body = r.json()
+            print(dumps(body, indent=2))
+            self.assertRegex(body['headers']['User-Agent'], r'python-requests/.*')
 
