@@ -96,6 +96,19 @@ Or try our decorator pattern with a function annotation
 @openziti.zitify(bindings={('127.0.0.1', 18080): {'ztx': '/path/to/identity.json', 'service': 'name-of-ziti-service'}})
 def yourFunction():
 ```
+
+The `binding` dictionary configures what happens when the code tries to open a server socket. Standard network addresses 
+are mapped to ziti service configurations. For example, with his configuration
+```python
+bindings = {
+   ('0.0.0.0', 8080): { 'ztx': 'my-identity.json', 'service':'my-service' }
+}
+```
+when application opens a server socket and binds to address `0.0.0.0:8080` it will actually bind to the ziti service named `my-service`.
+
+Binding addresses can be specified with tuples, strings, or ints(ports). `('0.0.0.0', 8080)`, `'0.0.0.0:8080'`, `':8080'`, `8080` 
+are all considered and treated the same.
+
 ## Examples
 Try it out yourself with one of our [examples](sample%2FREADME.md)
 * [Flazk](sample/flask-of-ziti)
