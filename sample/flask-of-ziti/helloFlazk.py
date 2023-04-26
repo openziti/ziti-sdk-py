@@ -1,4 +1,4 @@
-#  Copyright NetFoundry Inc.
+#  Copyright (c)  NetFoundry Inc.
 #
 #  Licensed under the Apache License, Version 2.0 (the "License");
 #  you may not use this file except in compliance with the License.
@@ -21,20 +21,16 @@ bind_opts = {}  # populated in main
 
 
 @openziti.zitify(bindings={
-    ('127.0.0.1', 18080): bind_opts
+    ':18080': bind_opts,
 })
 def runApp():
     from waitress import serve
-    serve(app,host='127.0.0.1',port=18080)
+    serve(app,port=18080)
 
 
 @app.route('/')
 def hello_world():  # put application's code here
     return 'Have some Ziti!'
-
-@app.route('/json')
-def get_json():
-    return '{ "name":"Ziti", "message":"Have some JSON Ziti"}'
 
 
 if __name__ == '__main__':

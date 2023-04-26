@@ -20,14 +20,40 @@ from typing import Tuple, Union
 from . import context, zitilib
 
 
+def process_bindings(orig):
+    """normalize binding addresses"""
+    bindings = {}
+
+    if orig is not None:
+        for k in orig:
+            host = ''
+            port = 0
+            val = orig[k]
+            if isinstance(k, tuple):
+                host,port = k
+            elif isinstance(k, str):
+                l = k.split(':')
+                if len(l) == 1:
+                    port = l[0]
+                else:
+                    host, port = l
+            elif isinstance(k, int):
+                port = k
+
+            host = '0.0.0.0' if host == '' else host
+            bindings[(host, int(port))] = val
+
+    return bindings
+
+
+
 class ZitiSocket(PySocket):
     # pylint: disable=redefined-builtin
     def __init__(self, af=-1, type=-1, proto=-1, fileno=None, opts=None):
         zitilib.init()
         if opts is None:
             opts = {}
-        if opts.get('bindings') is None:
-            opts['bindings'] = {}
+        self._ziti_bindings = process_bindings(opts.get('bindings'))
         self._bind_address = None
         self._ziti_opts = opts
         self._ziti_af = af
@@ -65,8 +91,8 @@ class ZitiSocket(PySocket):
 
     def bind(self, addr) -> None:
         self._bind_address = addr
-        bindings = self._ziti_opts['bindings']
-        cfg = bindings.get(addr)
+        h, p = addr
+        cfg = self._ziti_bindings.get((h, int(p)))
         if cfg is not None:
             ztx = context.get_context(cfg['ztx'])
             service = cfg['service']
