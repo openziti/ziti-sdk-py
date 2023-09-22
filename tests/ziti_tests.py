@@ -17,6 +17,7 @@ import openziti
 import requests
 from requests.exceptions import ConnectionError
 
+
 def get_httpbin(url):
     return requests.get(url)
 
