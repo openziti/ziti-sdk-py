@@ -30,7 +30,7 @@ def process_bindings(orig):
             port = 0
             val = orig[k]
             if isinstance(k, tuple):
-                host,port = k
+                host, port = k
             elif isinstance(k, str):
                 l = k.split(':')
                 if len(l) == 1:
@@ -44,7 +44,6 @@ def process_bindings(orig):
             bindings[(host, int(port))] = val
 
     return bindings
-
 
 
 class ZitiSocket(PySocket):
@@ -127,7 +126,8 @@ class ZitiSocket(PySocket):
             pass
 
 
-def create_ziti_connection(address, **_):
+def create_ziti_connection(address, timeout=None,
+                           source_address=None, *, all_errors=False):
     sock = ZitiSocket(socket.SOCK_STREAM)
     sock.connect(address)
     return sock
