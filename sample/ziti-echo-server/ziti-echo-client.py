@@ -16,13 +16,18 @@ import sys
 import openziti
 import socket
 
-def netcat_client(ziti_id, service, port):
+def netcat_client(ziti_id, service):
     try:
         zitiContext = openziti.load(ziti_id)
-        client = openziti.socket(type = socket.SOCK_STREAM) #socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    except Exception as e:
+        print(f'could not find identity file: {e}')
+        return
 
+    try:
+        client = openziti.socket(type = socket.SOCK_STREAM) #socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        port = 65535
         client.connect((service, port))
-        print(f"Connected to {service}:{port}")
+        print(f"Connected to {service}:there_is_no_port")
 
         while True:
             user_input = input("Enter a message: ")
@@ -35,7 +40,7 @@ def netcat_client(ziti_id, service, port):
             print("Server response:", data.decode("utf-8"))
 
     except ConnectionRefusedError:
-        print(f"Connection to {service}:{port} refused.")
+        print(f"Connection to {service}:there_is_no_port refused.")
     except KeyboardInterrupt:
         print("\nConnection closed.")
     except Exception as e:
@@ -44,4 +49,4 @@ def netcat_client(ziti_id, service, port):
         client.close()
 
 if __name__ == "__main__":
-    netcat_client(sys.argv[1], sys.argv[2], int(sys.argv[3]))
+    netcat_client(sys.argv[1], sys.argv[2])
