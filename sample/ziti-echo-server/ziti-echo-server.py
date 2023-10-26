@@ -40,7 +40,7 @@ def run(ziti_id, service):
                     break
                 count += len(data)
                 conn.sendall(data)
-                print(f'received data from client. returning {count} bytes of data now...')
+                print(f'received data from client. returning {len(data)} bytes of data now...')
 
 
 if __name__ == '__main__':
