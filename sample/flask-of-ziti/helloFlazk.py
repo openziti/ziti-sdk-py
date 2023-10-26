@@ -19,19 +19,17 @@ import sys
 app = Flask(__name__)
 bind_opts = {}  # populated in main
 
-
-@openziti.zitify(bindings={
-    ':18080': bind_opts,
-})
+@openziti.zitify(bindings={':18080': bind_opts,})
 def runApp():
     from waitress import serve
+    print("starting server on OpenZiti overlay")
+    #the port is only used to integrate OpenZiti with frameworks that expect a "hostname:port" combo
     serve(app,port=18080)
-
 
 @app.route('/')
 def hello_world():  # put application's code here
+    print("received a request to /")
     return 'Have some Ziti!'
-
 
 if __name__ == '__main__':
     bind_opts['ztx'] = sys.argv[1]
