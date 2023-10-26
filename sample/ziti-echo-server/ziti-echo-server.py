@@ -13,8 +13,13 @@
 #  limitations under the License.
 
 import sys
+import signal
+import threading
 import openziti
 
+def signal_handler(signum, frame):
+    print("\nCtrl-C detected. Exiting...")
+    sys.exit(0)
 
 def run(ziti_id, service):
     ztx = openziti.load(ziti_id)
@@ -22,18 +27,27 @@ def run(ziti_id, service):
     server.listen()
 
     while True:
+        print('beginning accept')
         conn, peer = server.accept()
         print(f'processing incoming client[{peer}]')
         with conn:
             count = 0
             while True:
+                print('starting receive')
                 data = conn.recv(1024)
                 if not data:
                     print(f'client finished after sending {count} bytes')
                     break
                 count += len(data)
                 conn.sendall(data)
+                print(f'received data from client. returning {count} bytes of data now...')
 
 
 if __name__ == '__main__':
-    run(sys.argv[1], sys.argv[2])
+    signal.signal(signal.SIGINT, signal_handler)
+    # Create a separate thread to run the server so we can respond to ctrl-c when in 'accept'
+    server_thread = threading.Thread(target=run, args=(sys.argv[1], sys.argv[2]))
+    server_thread.start()
+
+    # Wait for the server thread to complete or Ctrl-C to be detected
+    server_thread.join()
