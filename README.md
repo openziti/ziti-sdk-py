@@ -1,6 +1,4 @@
-<a href="https://docs.openziti.io/">
-    <img src="./images/ziti-logo-dark.svg" alt="ziti logo" title="OpenZiti" align="right" height="60" />
-</a>
+![Ziggy loves python](https://raw.githubusercontent.com/openziti/branding/main/images/banners/Python.jpg)
 
 # Python SDK for OpenZiti
 <p align="center">
@@ -25,8 +23,6 @@
   <a href="#contributing">Contributing</a> •
   <a href="#license">License</a>
 </p>
-
-<img src="./images/Ziggy-Loves-Python.svg" align="right" alt="ziggy-loves-python" width="15%">
 
 The Python SDK for [OpenZiti](https://github.com/openziti/ziti) is a library that enables you to integrate zero trust network connectivity into your Python 
 applications, and establish secure connections with remote network resources over an OpenZiti network. The SDK also 
