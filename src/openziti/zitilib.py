@@ -214,9 +214,13 @@ def check_error(code):
         err = _ziti_lasterr()
         if err < 0:
             msg = _ziti_errorstr(err).decode(encoding='utf-8')
-        else:
-            msg = errorstr(err)
-        raise Exception(err, msg)
+            raise Exception(err, msg)
+
+        if err in [socket.EWOULDBLOCK, socket.EAGAIN]:
+            raise BlockingIOError()
+
+        msg = os.strerror(err)
+        raise OSError(err, msg)
 
 
 def init():
