@@ -141,9 +141,9 @@ Here are the Ziti ingredients.
 
 1. Router Policies - ensure your identities and services are granted access to at least one common, online router
 
-## Generate Some Dummy Files
+## Generate Some Log Files
 
-Generate some log files to upload if you need some.
+Generate some log files to upload in the `./logs` directory.
 
 ```bash
 python ./log-generator.py
