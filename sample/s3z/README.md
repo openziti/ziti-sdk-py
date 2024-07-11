@@ -81,6 +81,12 @@ Here are the AWS ingredients.
 }
 ```
 
+### AWS Credential
+
+Any valid credential will work if your bucket policy requires only the VPC endpoint source. The AWS Python SDK (boto)
+uses the same credential discovery as the `aws` CLI, so you can configure a credential with standard AWS environment
+variables, shared credentials file, EC2 introspection API, etc.
+
 ## Set Up Ziti
 
 Here are the Ziti ingredients.
@@ -137,7 +143,7 @@ Here are the Ziti ingredients.
 
 ## Generate Some Dummy Files
 
-If you need some worthless log files you can run this.
+Generate some log files to upload if you need some.
 
 ```bash
 python ./log-generator.py
