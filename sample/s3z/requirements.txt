@@ -1,0 +1,4 @@
+argparse
+boto3
+openziti
+namesgenerator

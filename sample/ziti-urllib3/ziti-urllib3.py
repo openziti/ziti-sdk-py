@@ -22,4 +22,3 @@ if __name__ == '__main__':
     r = http.request('GET', sys.argv[1])
     print("{0} {1}".format(r.status, r.reason))
     print(r.data.decode('utf-8'))
-
