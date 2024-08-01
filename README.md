@@ -1,6 +1,7 @@
 ![Ziggy loves python](https://raw.githubusercontent.com/openziti/branding/main/images/banners/Python.jpg)
 
 # Python SDK for OpenZiti
+
 <p align="center">
   <a href="https://openziti.discourse.group/">
     <img src="https://img.shields.io/discourse/users?server=https%3A%2F%2Fopenziti.discourse.group" alt="Discourse">
@@ -34,11 +35,13 @@ OpenZiti is an open-source project that provides secure, zero-trust networking f
 More specifically, the SDK allows you to integrate zero trust at the application level. This means your data is never 
 exposed outside the application environment providing you with end-to-end encryption for ultimate security. See other 
 zero trust models [here](https://docs.openziti.io/docs/learn/core-concepts/zero-trust-models/overview).
+
 <p align="center">
 <img src="./images/ztaa-model-overview.png" alt="Zero-trust-application-access">
 </p>
 
 ## Getting Started
+
 If you don't already have an OpenZiti network running, you can follow our [express install guides](https://docs.openziti.io/docs/learn/quickstarts/network/) 
 to set up the network that fits your needs. Or, you can try [CloudZiti](https://netfoundry.io/pricing/) for free, check out more [here](https://docs.openziti.io/).
 
@@ -52,6 +55,7 @@ pip install openziti
 ```
 
 ### Using Ziti Python SDK
+
 With just two lines of code, you can turn your plain old web server into a secure, zero-trust embedded application. 
 Below is an example of just how simple it is to get started.
 
@@ -87,7 +91,9 @@ know what a monkey patch is! However, if you're interested in what a monkey patc
 cfg = dict(ztx=openziti.load('/path/to/identity.json'), service="name-of-ziti-service")
 openziti.monkeypatch(bindings={('127.0.0.1', 8000): cfg})
 ```
+
 Or try our decorator pattern with a function annotation
+
 ```python
 @openziti.zitify(bindings={('127.0.0.1', 18080): {'ztx': '/path/to/identity.json', 'service': 'name-of-ziti-service'}})
 def yourFunction():
@@ -95,35 +101,46 @@ def yourFunction():
 
 The `binding` dictionary configures what happens when the code tries to open a server socket. Standard network addresses 
 are mapped to ziti service configurations. For example, with his configuration
+
 ```python
 bindings = {
    ('0.0.0.0', 8080): { 'ztx': 'my-identity.json', 'service':'my-service' }
 }
 ```
+
 when application opens a server socket and binds to address `0.0.0.0:8080` it will actually bind to the ziti service named `my-service`.
 
 Binding addresses can be specified with tuples, strings, or ints(ports). `('0.0.0.0', 8080)`, `'0.0.0.0:8080'`, `':8080'`, `8080` 
 are all considered and treated the same.
 
 ## Examples
+
 Try it out yourself with one of our [examples](sample%2FREADME.md)
+
 * [Flazk](sample/flask-of-ziti)
 * [Echo Server](sample/ziti-echo-server)
 * [HTTP Server](sample/ziti-http-server)
 * [Ziti Requests](sample/ziti-requests)
 * [Ziti Socket](sample/ziti-socket)
 * [Ziti urllib3](sample/ziti-urllib3)
+* [S3 Log Uploader (boto3)](sample/s3z)
 
 ## Support
+
 ### Looking for Help?
+
 Please use these community resources for getting help. We use GitHub [issues](https://github.com/openziti/ziti-sdk-py/issues)
 for tracking bugs and feature requests and have limited bandwidth to address them.
 
 - Read the [offical docs](https://docs.openziti.io/docs/learn/introduction/)
 - Join our [Developer Community](https://openziti.org)
 - Participate in discussion on [Discourse](https://openziti.discourse.group/)
+
 ## Contributing
+
 Do you want to get your hands dirty and help make OpenZiti better? Contribute to the OpenZiti open-source project 
 through bug reports, bug fixes, documentation, etc. Check out our guide on contributing to our projects [here](https://docs.openziti.io/policies/CONTRIBUTING.html).
+
 ## License
+
 [Apache 2.0](./LICENSE)
