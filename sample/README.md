@@ -23,7 +23,7 @@ First, you'll need the dependent libraries used in the examples.
   pip install -r requirements
   ```
 
-### Get and Enroll An Identity
+### Get and Enroll an Identity
 
 You need an [identity](https://docs.openziti.io/docs/learn/core-concepts/identities/overview) to be used by the example 
 application. If using [ZEDS](https://zeds.openziti.org) you can grab one from there, otherwise you can find all the
