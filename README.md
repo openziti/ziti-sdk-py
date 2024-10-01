@@ -117,7 +117,7 @@ are all considered and treated the same.
 
 Try it out yourself with one of our [examples](sample%2FREADME.md)
 
-* [Flazk](sample/flask-of-ziti)
+* [Flask](sample/flask-of-ziti)
 * [Echo Server](sample/ziti-echo-server)
 * [HTTP Server](sample/ziti-http-server)
 * [Ziti Requests](sample/ziti-requests)
