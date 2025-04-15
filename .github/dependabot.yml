@@ -7,6 +7,5 @@ updates:
       interval: weekly
     groups:
       actions:
-        name: Actions
         patterns:
           - '*'
