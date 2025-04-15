@@ -18,12 +18,12 @@ jobs:
       HAVE_TEST_ID: ${{ secrets.ZITI_TEST_IDENTITY != '' }}
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
       - name: Setup Python
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v5
         with:
           python-version: '3.x'
 
@@ -47,7 +47,7 @@ jobs:
         run: |
           python setup.py sdist
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         if: startsWith(matrix.spec.name, 'linux')
         with:
           name: openziiti-sdist
@@ -58,7 +58,7 @@ jobs:
     needs: [ build_wheels ]
     steps:
       - name: Download artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           path: download
 
