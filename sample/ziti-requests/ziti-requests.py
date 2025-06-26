@@ -23,6 +23,7 @@ if __name__ == '__main__':
         service = 'httpbin.ziti'
 
     with openziti.monkeypatch():
-        r = requests.get('http://' + service + '/json')
+        print(f"requesting http://{service}/json")
+        r = requests.get(f"http://{service}/json")
         print(r.headers)
-        print(r.json())
+        print(r.text)

@@ -31,6 +31,12 @@ def hello_world():  # put application's code here
     print("received a request to /")
     return 'Have some Ziti!'
 
+
+@app.route('/json')
+def some_json():  # put application's code here
+    print("received a request to /json")
+    return '{"here":"is", "some":"json"}'
+
 if __name__ == '__main__':
     bind_opts['ztx'] = sys.argv[1]
     bind_opts['service'] = sys.argv[2]
