@@ -14,7 +14,7 @@ jobs:
         spec:
           - { name: 'linux x86_64', runner: ubuntu-latest }
           - { name: 'macOS x86_64', runner: macos-latest }
-          - { name: 'Windows x86_64', runner: windows-latest }
+#          - { name: 'Windows x86_64', runner: windows-latest }
     name: building ${{ matrix.spec.name }}
     runs-on: ${{ matrix.spec.runner }}
     steps:
