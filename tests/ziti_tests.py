@@ -25,7 +25,12 @@ class TestZitiModule(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         print("💥 setting up ziti", flush=True)
-        cls.ziti_path = get_ziti(add_to_path=False)
+        ziti_bin = os.getenv("ZITI_BIN", "")
+        if ziti_bin:
+            cls.ziti_path = ziti_bin
+        else:
+            cls.ziti_path = get_ziti(add_to_path=False)
+        print(f"using ziti path: {cls.ziti_path}", flush=True)
         cls.proc = start_ziti_quickstart(cls.ziti_path)
         wait_for_controller()
         print("✅ ziti is up", flush=True)
