@@ -12,13 +12,11 @@ jobs:
       fail-fast: false
       matrix:
         spec:
-          - { name: 'linux x86_64', runner: ubuntu-22.04 }
-          - { name: 'macOS x86_64', runner: macos-14 }
-          - { name: 'Windows x86_64', runner: windows-2019 }
+          - { name: 'linux x86_64', runner: ubuntu-latest }
+          - { name: 'macOS x86_64', runner: macos-latest }
+          - { name: 'Windows x86_64', runner: windows-latest }
     name: building ${{ matrix.spec.name }}
     runs-on: ${{ matrix.spec.runner }}
-    env:
-      HAVE_TEST_ID: ${{ secrets.ZITI_TEST_IDENTITY != '' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -33,16 +31,13 @@ jobs:
       - name: Install Python Tools
         run: python -m pip install -U pip setuptools
 
-      - name: Run Integration Tests
-        if: ${{ env.HAVE_TEST_ID == 'true' }}
-        env:
-          ZITI_TEST_IDENTITY: ${{ secrets.ZITI_TEST_IDENTITY }}
-          ZITI_IDENTITIES: id.json
+      - name: Install ziti and run integration tests
         shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "${ZITI_TEST_IDENTITY}" > "${ZITI_IDENTITIES}"
-          ls
           pip install -r tests/requirements.txt
+          pip install -r sample/requirements.txt
           pip install .
           python -m unittest tests/ziti_tests.py
 

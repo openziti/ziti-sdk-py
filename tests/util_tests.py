@@ -36,4 +36,4 @@ class TestZitiModule(unittest.TestCase):
         }
 
         norm = process_bindings(orig)
-        self.assertEquals(norm, expected)
+        self.assertEqual(norm, expected)
