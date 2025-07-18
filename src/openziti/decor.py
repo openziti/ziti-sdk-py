@@ -77,6 +77,7 @@ def zitify(**zkwargs):
     def zitify_func(func):
         def zitified(*args, **kwargs):
             with MonkeyPatch(**zkwargs):
-                func(*args, **kwargs)
+                r = func(*args, **kwargs)
+                return r
         return zitified
     return zitify_func
