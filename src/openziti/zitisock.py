@@ -48,30 +48,31 @@ def process_bindings(orig):
 
 class ZitiSocket(PySocket):
     # pylint: disable=redefined-builtin
-    def __init__(self, af=-1, type=-1, proto=-1, fileno=None, opts=None):
+    def __init__(self, family=-1, type=-1, proto=-1, fileno=None, opts=None):
         zitilib.init()
         if opts is None:
             opts = {}
         self._ziti_bindings = process_bindings(opts.get('bindings'))
         self._bind_address = None
         self._ziti_opts = opts
-        self._ziti_af = af
+        self._ziti_af = family
         self._ziti_type = type
         self._ziti_proto = proto
         if fileno:
-            super().__init__(af, type, proto, fileno)
+            super().__init__(family, type, proto, fileno)
             return
 
         if type == -1:
             type = socket.SOCK_STREAM
 
         self._zitifd = zitilib.ziti_socket(type)
-        super().__init__(af, type, proto, self._zitifd)
+        super().__init__(family, type, proto, self._zitifd)
 
     def connect(self, addr) -> None:
         if self._zitifd is None:
             pass
         if isinstance(addr, tuple):
+            self._ziti_peer = addr
             try:
                 zitilib.connect_addr(self._zitifd, addr)
             except:
@@ -105,9 +106,15 @@ class ZitiSocket(PySocket):
             PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
             PySocket.bind(self, addr)
 
+    def getpeername(self):
+        if hasattr(self, '_ziti_peer'):
+            return self._ziti_peer
+        else:
+            return PySocket.getpeername(self)
+
     def getsockname(self) -> Tuple['str', int]:
         # return this for now since frameworks expect something to be returned
-        return ('127.0.0.1', 0)
+        return '127.0.0.1', 0
 
     def listen(self, __backlog: int = 5) -> None:
         try:
