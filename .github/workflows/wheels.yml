@@ -6,6 +6,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: 'build-wheels-${{ github.ref }}'
+  cancel-in-progress: true
+
 jobs:
   build_wheels:
     strategy:
@@ -34,6 +38,7 @@ jobs:
       - name: Install ziti and run integration tests
         shell: bash
         env:
+          ZITI_LOG: 4
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pip install -r tests/requirements.txt
