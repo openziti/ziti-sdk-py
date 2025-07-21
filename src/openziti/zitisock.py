@@ -124,7 +124,7 @@ class ZitiSocket(PySocket):
 
     def accept(self):
         fd, peer = zitilib.accept(self.fileno())
-        return ZitiSocket(af=self._ziti_af, type=self._ziti_type, fileno=fd), peer
+        return ZitiSocket(family=self._ziti_af, type=self._ziti_type, fileno=fd), peer
 
     def setsockopt(self, __level: int, __optname: int, __value: Union[int, bytes]) -> None:
         try:
