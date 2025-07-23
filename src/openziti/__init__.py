@@ -33,5 +33,5 @@ for identity in _ziti_identities:
 monkeypatch = decor.MonkeyPatch
 zitify = decor.zitify
 
+from . import _version
 __version__ = _version.get_versions()['version']
-del _version
