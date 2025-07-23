@@ -103,7 +103,7 @@ class TestZitiModule(unittest.TestCase):
         print("test_monkeypatch_bypass: " + os.environ["ZITI_IDENTITIES"])
         with openziti.monkeypatch():
             from json import dumps
-            r = get_httpbin('https://httpbin.org/json')
+            r = get_httpbin('https://httpbingo.org/json')
             self.assertEqual(r.status_code, 200, f"got {r.status_code}, body: {r.text}")
             body = r.json()
             print(dumps(body, indent=2))
