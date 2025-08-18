@@ -11,7 +11,7 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import logging
 import socket
 from os.path import isdir, isfile
 
@@ -19,6 +19,8 @@ from . import zitilib, zitisock
 
 
 class ZitiContext:
+    EXTERNAL_LOGIN_REQUIRED = -39
+    PARTIALLY_AUTHENTICATED = -31
     """
     Object representing a Ziti Identity.
     """
@@ -63,7 +65,7 @@ class ZitiContext:
         return sock
 
     @classmethod
-    def from_path(cls, path):
+    def from_path(cls, path) -> tuple["ZitiContext", int]:
         """
         Load Ziti Identity
 
@@ -74,10 +76,29 @@ class ZitiContext:
             raise TypeError("path must be a string")
         if not (isfile(path) or isdir(path)):
             raise ValueError(f"{path} is not a valid path")
-        return cls(zitilib.load(path))
+        zh, err = zitilib.load(path)
+        if err != 0:
+            logging.warning("Failed to load Ziti Identity from %s: %s", path, zitilib.errorstr(err))
+        return cls(zh), err
+
+    def get_external_signers(self):
+        return zitilib.list_external_signers(self._ctx)
+
+    def login_external(self, signer) -> str:
+        if not isinstance(signer, str):
+            raise TypeError("signer must be a string")
+        return zitilib.login_external(self._ctx, signer)
+
+    def login_totp(self, totp: str) -> None:
+        code = zitilib.login_totp(self._ctx, totp)
+        if code != 0:
+            raise RuntimeError(f"Failed to login with TOTP: {zitilib.errorstr(code)}")
+
+    def wait_for_auth(self, timeout=60):
+        return zitilib.wait_for_auth(self._ctx, timeout)
 
 
-def load_identity(path) -> ZitiContext:
+def load_identity(path) -> tuple[ZitiContext, int]:
     """
     Load Ziti Identity
 
@@ -91,5 +112,6 @@ def get_context(ztx) -> ZitiContext:
     if isinstance(ztx, ZitiContext):
         return ztx
     if isinstance(ztx, str):
-        return ZitiContext.from_path(ztx)
+        z, _ = ZitiContext.from_path(ztx)
+        return z
     raise TypeError(f'{ztx} is not a ZitiContext or str instance')

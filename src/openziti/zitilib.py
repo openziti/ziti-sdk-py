@@ -132,8 +132,37 @@ _ziti_errorstr.argtypes = [ctypes.c_int]
 _ziti_errorstr.restype = ctypes.c_char_p
 
 _load_ctx = ziti.Ziti_load_context
-_load_ctx.argtypes = [ctypes.POINTER(ctypes.c_char), ]
-_load_ctx.restype = ctypes.c_void_p
+_load_ctx.argtypes = [
+    ctypes.POINTER(ctypes.c_int32), # ziti context handle
+    ctypes.POINTER(ctypes.c_char), # ziti identity path or json
+]
+_load_ctx.restype = ctypes.c_int
+
+_get_signers = ziti.Ziti_get_ext_signers
+_get_signers.argtypes = [
+    ctypes.c_int32, # ziti context handle
+]
+_get_signers.restype = ctypes.POINTER(ctypes.c_char_p)
+
+_login_external = ziti.Ziti_login_external
+_login_external.argtypes = [
+    ctypes.c_int32, # ziti context handle
+    ctypes.c_char_p, # external signer name
+]
+_login_external.restype = ctypes.c_char_p
+
+
+_login_totp = ziti.Ziti_login_totp
+_login_totp.argtypes = [
+    ctypes.c_int32, # ziti context handle
+    ctypes.c_char_p, # totp code
+]
+_login_totp.restype = ctypes.c_int
+
+
+_wait_for_auth = ziti.Ziti_wait_for_auth
+_wait_for_auth.argtypes = [ctypes.c_int32]  # ziti context handle
+_wait_for_auth.restype = ctypes.c_int
 
 _ziti_socket = ziti.Ziti_socket
 _ziti_socket.argtypes = [ctypes.c_int]
@@ -241,11 +270,43 @@ def shutdown():
     ziti.Ziti_lib_shutdown()
 
 
-def load(path):
+def load(path) -> tuple[int, int]:
     init()
     b_obj = bytes(path, encoding="utf-8")
-    return _load_ctx(b_obj)
+    hp = ctypes.c_int32()
 
+    err = _load_ctx(ctypes.pointer(hp), b_obj)
+    return hp.value, err
+
+def login_external(ziti_ctx: int, name: str) -> str:
+    init()
+    name_b = bytes(name, encoding='utf-8')
+    url = _login_external(ziti_ctx, name_b)
+    return url.decode('utf-8')
+
+def list_external_signers(ziti_ctx: int) -> list[str]:
+    init()
+    signers_p = _get_signers(ziti_ctx)
+
+    signers = []
+    if not signers_p:
+        return signers
+
+    idx = 0
+    while signers_p[idx]:
+        signers.append(signers_p[idx].decode('utf-8'))
+        idx += 1
+
+    return signers
+
+def login_totp(ziti_ctx: int, totp: str) -> int:
+    init()
+    totp_b = bytes(totp, encoding='utf-8')
+    return _login_totp(ziti_ctx, totp_b)
+
+def wait_for_auth(ziti_ctx: int, timeout:int) -> int:
+    init()
+    return _wait_for_auth(ziti_ctx, timeout * 1000)
 
 def connect(fd, ztx, service: str, terminator: Optional[str] = None):
     srv = bytes(service, encoding='utf-8')
