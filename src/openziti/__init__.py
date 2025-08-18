@@ -25,6 +25,8 @@ version = zitilib.version
 shutdown = zitilib.shutdown
 load = context.load_identity
 socket = zitisock.ZitiSocket
+ZitiContext = context.ZitiContext
+
 
 for identity in _ziti_identities:
     if identity != '':
