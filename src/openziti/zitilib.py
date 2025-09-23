@@ -131,10 +131,11 @@ _ziti_errorstr = ziti.ziti_errorstr
 _ziti_errorstr.argtypes = [ctypes.c_int]
 _ziti_errorstr.restype = ctypes.c_char_p
 
-_load_ctx = ziti.Ziti_load_context
+_load_ctx = ziti.Ziti_load_context_with_timeout
 _load_ctx.argtypes = [
     ctypes.POINTER(ctypes.c_int32), # ziti context handle
     ctypes.POINTER(ctypes.c_char), # ziti identity path or json
+    ctypes.c_int, # ziti timeout in ms
 ]
 _load_ctx.restype = ctypes.c_int
 
@@ -270,12 +271,12 @@ def shutdown():
     ziti.Ziti_lib_shutdown()
 
 
-def load(path) -> tuple[int, int]:
+def load(path, timeout=0) -> tuple[int, int]:
     init()
     b_obj = bytes(path, encoding="utf-8")
     hp = ctypes.c_int32()
 
-    err = _load_ctx(ctypes.pointer(hp), b_obj)
+    err = _load_ctx(ctypes.pointer(hp), b_obj, ctypes.c_int(timeout))
     return hp.value, err
 
 def login_external(ziti_ctx: int, name: str) -> str:

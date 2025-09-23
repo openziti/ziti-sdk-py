@@ -94,7 +94,7 @@ class ZitiSocket(PySocket):
         h, p = addr
         cfg = self._ziti_bindings.get((h, int(p)))
         if cfg is not None:
-            ztx = context.get_context(cfg['ztx'])
+            ztx = context.get_context(cfg['ztx'], timeout=cfg.get('timeout', 0))
             service = cfg['service']
             terminator = None
             if isinstance(service, tuple):

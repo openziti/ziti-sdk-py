@@ -65,18 +65,19 @@ class ZitiContext:
         return sock
 
     @classmethod
-    def from_path(cls, path) -> tuple["ZitiContext", int]:
+    def from_path(cls, path, timeout=0) -> tuple["ZitiContext", int]:
         """
         Load Ziti Identity
 
         :param path: path to Ziti Identity file
+        :param timeout: timeout in milliseconds for loading identity
         :return: ZitiContext representing given identity
         """
         if not isinstance(path, str):
             raise TypeError("path must be a string")
         if not (isfile(path) or isdir(path)):
             raise ValueError(f"{path} is not a valid path")
-        zh, err = zitilib.load(path)
+        zh, err = zitilib.load(path, timeout)
         if err != 0:
             logging.warning("Failed to load Ziti Identity from %s: %s", path, zitilib.errorstr(err))
         return cls(zh), err
@@ -98,20 +99,21 @@ class ZitiContext:
         return zitilib.wait_for_auth(self._ctx, timeout)
 
 
-def load_identity(path) -> tuple[ZitiContext, int]:
+def load_identity(path, timeout=0) -> tuple[ZitiContext, int]:
     """
     Load Ziti Identity
 
     :param path: path to Ziti Identity file
+    :param timeout: timeout in milliseconds for loading identity
     :return: Ziti Context object representing Ziti Identity
     """
-    return ZitiContext.from_path(path)
+    return ZitiContext.from_path(path, timeout)
 
 
-def get_context(ztx) -> ZitiContext:
+def get_context(ztx, timeout=0) -> ZitiContext:
     if isinstance(ztx, ZitiContext):
         return ztx
     if isinstance(ztx, str):
-        z, _ = ZitiContext.from_path(ztx)
+        z, _ = ZitiContext.from_path(ztx, timeout)
         return z
     raise TypeError(f'{ztx} is not a ZitiContext or str instance')
