@@ -59,6 +59,8 @@ jobs:
 
   publish:
     runs-on: ubuntu-latest
+    # this step will fail on community contributed PRs
+    if: github.event.pull_request.head.repo.fork == false
     needs: [ build_wheels ]
     steps:
       - name: Download artifacts
