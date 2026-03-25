@@ -14,6 +14,7 @@ python_files = [
     "*_test.py",
     "test_*.py"
 ]
+asyncio_mode = "auto"
 junit_family = "xunit2"
 junit_suite_name = "pytest"
 markers = ["require_ziti: mark test as requiring version of ziti to run"]

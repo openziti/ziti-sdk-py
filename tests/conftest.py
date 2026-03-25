@@ -24,7 +24,7 @@ import pytest
 from semver import Version
 
 import openziti
-from .util import create_identity, create_service, enroll_identity, ziti_executable, echo_srv
+from .util import create_identity, create_service, enroll_identity, ziti_executable
 
 logger = logging.getLogger(__name__)
 

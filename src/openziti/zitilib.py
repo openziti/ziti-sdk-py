@@ -243,10 +243,11 @@ def errorstr(code):
 def check_error(code):
     if code != 0:
         err_no = ctypes.get_errno()
+        err = _ziti_lasterr()
+
         if err_no in [socket.EWOULDBLOCK, socket.EAGAIN, errno.EINPROGRESS]:
             raise BlockingIOError()
 
-        err = _ziti_lasterr()
         if err < 0:
             msg = _ziti_errorstr(err).decode(encoding='utf-8')
             raise Exception(err, msg)

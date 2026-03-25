@@ -27,6 +27,7 @@ load = context.load_identity
 socket = zitisock.ZitiSocket
 getaddrinfo = zitisock.ziti_getaddrinfo
 ZitiContext = context.ZitiContext
+open_connection = zitisock.open_ziti_connection
 
 
 for identity in _ziti_identities:

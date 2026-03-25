@@ -11,10 +11,12 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-
+import asyncio
 import socket
+from asyncio import StreamWriter, StreamReader, StreamReaderProtocol
 from socket import getaddrinfo as PyGetaddrinfo
 from socket import socket as PySocket
+from ssl import SSLContext
 from typing import Tuple, Union
 
 from . import context, zitilib
@@ -68,7 +70,7 @@ class ZitiSocket(PySocket):
         self._zitifd = zitilib.ziti_socket(type)
         super().__init__(family, type, proto, self._zitifd)
 
-    def connect(self, addr) -> None:
+    def connect(self, addr: tuple[str,int]) -> None:
         if self._zitifd is None:
             pass
         if isinstance(addr, tuple):
@@ -148,3 +150,38 @@ def ziti_getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
     if addrs is None:
         addrs = PyGetaddrinfo(host, port, family, type, proto, flags)
     return addrs
+
+
+async def open_ziti_connection(
+        host: str, port: int,
+        ssl: bool | None | SSLContext = None,
+        server_hostname: str | None = None,
+) -> tuple[StreamReader, StreamWriter]:
+    """
+    Opens a streaming connection to a ziti service with the matching intercept (host, port) returning a (reader, writer) pair.
+
+    The reader returned is a StreamReader instance; the writer is a
+    StreamWriter instance.
+
+    """
+    loop = asyncio.get_running_loop()
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM, 0, )
+    s.setblocking(False)
+    if server_hostname is None and ssl:
+        server_hostname = host
+
+    try:
+        zitilib.connect_addr(s.fileno(), (host, port))
+    except BlockingIOError:
+        # this is expected
+        pass
+    except:
+        s.close()
+        raise
+
+    reader = StreamReader(loop=loop)
+    protocol = StreamReaderProtocol(stream_reader=reader, loop=loop)
+    transport, _ = await loop.create_connection(lambda: protocol, sock=s, ssl=ssl, server_hostname=server_hostname)
+    writer = StreamWriter(transport=transport, protocol=protocol, reader=reader, loop=loop)
+    return reader, writer
+
