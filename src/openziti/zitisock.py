@@ -75,7 +75,9 @@ class ZitiSocket(PySocket):
             self._ziti_peer = addr
             try:
                 zitilib.connect_addr(self._zitifd, addr)
-            except:
+            except (BlockingIOError, InterruptedError):
+                raise
+            except Exception as e:
                 PySocket.close(self)
                 self._zitifd = None
                 PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
