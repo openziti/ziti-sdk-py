@@ -25,6 +25,7 @@ version = zitilib.version
 shutdown = zitilib.shutdown
 load = context.load_identity
 socket = zitisock.ZitiSocket
+getaddrinfo = zitisock.ziti_getaddrinfo
 ZitiContext = context.ZitiContext
 
 
