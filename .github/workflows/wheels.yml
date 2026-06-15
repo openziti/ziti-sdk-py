@@ -4,6 +4,7 @@ on:
   pull_request:
 
 permissions:
+  checks: write
   contents: read
   id-token: write
 
@@ -16,6 +17,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        ziti_version: [ 'v2.0' ]
         spec:
           - { name: 'linux x86_64', runner: ubuntu-latest }
           - { name: 'macOS x86_64', runner: macos-latest }
@@ -28,24 +30,47 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: openziti/ziti/setup-cli@main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        id: ziti
+        with:
+          version: ${{ matrix.ziti_version }}
+
       - name: Setup Python
         uses: actions/setup-python@v6
         with:
+          cache: 'pip'
           python-version: '3.x'
 
       - name: Install Python Tools
-        run: python -m pip install -U pip setuptools
+        shell: bash
+        run: |
+          python -m pip install -U pip setuptools
+          pip install -r tests/requirements.txt
+          pip install -r sample/requirements.txt
 
-      - name: Install ziti and run integration tests
+      - name: run tests
         shell: bash
         env:
           ZITI_LOG: 4
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pip install -r tests/requirements.txt
-          pip install -r sample/requirements.txt
           pip install .
-          python -m unittest tests/ziti_tests.py
+          pytest -v
+
+      - name: upload test summary
+        if: ${{ !cancelled() }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        uses: mikepenz/action-junit-report@v6
+        with:
+          job_summary_text: 'test results with ziti v${{ matrix.ziti_version }}'
+          detailed_summary: 'true'
+          include_skipped: 'true'
+          check_retries: 'true'
+          group_suite: 'true'
+          report_paths: testdata/test-*.xml
 
       - name: Build distro
         run: |
