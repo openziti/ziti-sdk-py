@@ -13,40 +13,35 @@
 #  limitations under the License.
 
 import sys
+
 import openziti
-import socket
+
 
 def netcat_client(ziti_id, service):
     try:
-        zitiContext = openziti.load(ziti_id)
+        ztx, _ = openziti.load(ziti_id)
     except Exception as e:
         print(f'could not find identity file: {e}')
         return
 
     try:
-        client = openziti.socket(type = socket.SOCK_STREAM) #socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        port = 65535
-        client.connect((service, port))
-        print(f"Connected to {service}:there_is_no_port")
+        with ztx.connect(service) as client:
+            print(f"Connected to {service}")
+            while True:
+                user_input = input("Enter a message: ")
+                client.send(user_input.encode("utf-8") + b'\n')
+                data = client.recv(1024)
+                if len(data) == 0:
+                    break
 
-        while True:
-            user_input = input("Enter a message: ")
-            client.send(user_input.encode("utf-8") + b'\n')
-
-            data = client.recv(1024)
-            if len(data) == 0:
-                break
-
-            print("Server response:", data.decode("utf-8"))
+                print("Server response:", data.decode("utf-8"))
 
     except ConnectionRefusedError:
-        print(f"Connection to {service}:there_is_no_port refused.")
+        print(f"Connection to {service} refused.")
     except KeyboardInterrupt:
         print("\nConnection closed.")
     except Exception as e:
         print(f"Error: {e}")
-    finally:
-        client.close()
 
 if __name__ == "__main__":
     netcat_client(sys.argv[1], sys.argv[2])
