@@ -16,17 +16,21 @@
 
 import json
 import logging
-import pytest
+import os
 import subprocess
 
-from conftest import ziti_executable
+import pytest
+
+import openziti
 
 logger = logging.getLogger(__name__)
+ziti_executable = os.environ.get("ZITI_CLI", "ziti")
 
 def ziti_edge(*args, check=True):
     """Run a ``ziti edge`` subcommand."""
     result = subprocess.run(
-        [ziti_executable, "edge"] + list(args),
+        executable=ziti_executable,
+        args = ["edge"] + list(args),
         capture_output=True, text=True,
     )
     logger.info("ziti edge %s -> rc=%d", " ".join(args), result.returncode)
@@ -40,7 +44,7 @@ def ziti_edge(*args, check=True):
 
 
 def create_service(name: str, dialer: str, binder: str, intercept: str | dict | None = None ):
-    if intercept is dict:
+    if isinstance(intercept, dict):
         intercept = json.dumps(intercept)
 
     ziti_edge("create", "service", name)
@@ -48,13 +52,20 @@ def create_service(name: str, dialer: str, binder: str, intercept: str | dict | 
         ziti_edge("create", "config", f"{name}-intercept", "intercept.v1", intercept)
         ziti_edge("update", "service", name, "-c", f"{name}-intercept")
 
-    ziti_edge("create", "service-policy", "Dial", f"{name}-dial",
-              "--identity-roles", dialer,
-              "--service-roles", name)
-    ziti_edge("create", "service-policy", "Bind", f"{name}-bind",
-              "--identity-roles", binder,
-              "--service-roles", name)
+    ziti_edge("create", "service-policy", f"{name}-dial", "Dial",
+              "--identity-roles", f"@{dialer}",
+              "--service-roles", f"@{name}")
+    ziti_edge("create", "service-policy", f"{name}-bind", "Bind",
+              "--identity-roles", f"@{binder}",
+              "--service-roles", f"@{name}")
 
 
-def create_identity(name: str, jwt: str):
+def create_identity(name: str, jwt: str) -> str:
     ziti_edge("create", "identity", name, "-o", jwt)
+    return jwt
+
+
+def enroll_identity(jwt: str) -> str:
+    cfg = openziti.enroll(jwt)
+    return cfg
+

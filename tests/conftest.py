@@ -13,21 +13,20 @@
 #  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #  See the License for the specific language governing permissions and
 #  limitations under the License.
-import asyncio
 import logging
 import os
 import subprocess
+import sys
 import threading
-from multiprocessing import Process
-
-import flask
-import waitress
-from semver import Version
+import time
 
 import pytest
+from semver import Version
+
+import openziti
+from .util import create_identity, create_service, enroll_identity, ziti_executable, echo_srv
 
 logger = logging.getLogger(__name__)
-ziti_executable = os.environ.get("ZITI_CLI", "ziti")
 
 @pytest.fixture(scope="session")
 def ziti_version():
@@ -40,90 +39,113 @@ def ziti_version():
 @pytest.fixture(autouse=True)
 def require_ziti(ziti_version, request):
     marker = request.node.get_closest_marker("require_ziti")
-    logger.warning("require_ziti marker: %s", marker)
+    logger.info("require_ziti marker: %s", marker)
     if marker:
         req_ver = marker.args[0]
-        logger.warning("require_ziti: required=%s, actual=%s", req_ver, ziti_version)
+        logger.info("require_ziti: required=%s, actual=%s", req_ver, ziti_version)
         if not ziti_version.match(req_ver):
             pytest.skip(f"Skipped because ziti version is {ziti_version} does not match {req_ver}")
 
+@pytest.fixture(autouse=True)
+def init():
+    """cleans up zitilib between tests"""
+    openziti.zitilib.init()
+    yield
+    openziti.shutdown()
+
 
 @pytest.fixture(scope="session")
-def quickstart():
-    pass
+def quickstart(tmpdir_factory):
+    qs_home = tmpdir_factory.mktemp("qs")
+    os.makedirs(qs_home, exist_ok=True)
+
+    ready = threading.Event()
+    proc = subprocess.Popen(
+        [ziti_executable, "edge", "quickstart",
+         "--home", qs_home,
+         "--ctrl-address=127.0.0.1",
+         "--router-address=127.0.0.1"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        text=True,
+    )
+
+    with open(f"{qs_home}/qs.log", "wt") as qs_log:
+        def _reader():
+            for line in proc.stdout:
+                qs_log.write(line)
+                if "controller and router started" in line:
+                    ready.set()
+
+        t = threading.Thread(target=_reader, daemon=True)
+        t.start()
+
+        if not ready.wait(timeout=300):
+            proc.kill()
+            pytest.fail("quickstart did not become ready within 300s")
+
+        yield proc
+
+        proc.terminate()
+        try:
+            code = proc.wait(timeout=10)
+            print(f"quickstart process exited with code {code}", file=qs_log)
+        except subprocess.TimeoutExpired:
+            print(f"killing quickstart process", file=qs_log)
+            proc.kill()
+            proc.wait()
 
 
 @pytest.fixture
-def echo_flask(request):
-    loop = asyncio.new_event_loop()
+def ziti_setup(quickstart, request, tmp_path):
+    """simple test setup: client, server, service with intercept"""
+    name = request.node.name
+    client_name = f"client_{name}"
+    server_name = f"server_{name}"
+    client_jwt = create_identity(client_name, f"{tmp_path}/client.jwt")
+    server_jwt = create_identity(server_name, f"{tmp_path}/server.jwt")
 
-    async def echo(input: asyncio.StreamReader, output: asyncio.StreamWriter):
-        client_address = output.get_extra_info('peername')
-        print(f"[+] New connection established from {client_address}")
-        bts = await input.read()
-        if not bts:
-            return
-        output.write(bts)
+    hostname = f"{name}.ziti.test"
+    intercept = {
+        "protocols": ["tcp", "udp"],
+        "portRanges": [{"low": 80, "high": 80}],
+        "addresses": [hostname],
+    }
 
-    async def run():
-        await asyncio.start_server(echo, port=8080)
-    task = loop.create_task(run(), eager_start=True)
-    thread = threading.Thread(target=loop.run_forever)
-    thread.start()
+    create_service(name, dialer=client_name, binder=server_name, intercept=intercept)
+
+    client_json = f"{tmp_path}/client.json"
+    with open(client_json, "wt") as f:
+        print(enroll_identity(client_jwt), file=f)
+    server_json = f"{tmp_path}/server.json"
+    with open(server_json, "wt") as f:
+        print(enroll_identity(server_jwt), file=f)
+
+    return dict(
+        client = client_json,
+        server = server_json,
+        service = name)
+
+
+@pytest.fixture
+def echo_server_process(ziti_setup, tmp_path):
+    identity = ziti_setup["server"]
+    service_name = ziti_setup["service"]
+    env = os.environ.copy()
+    env["ZITI_LOG"] = "5"
+    with open(f'{tmp_path}/echo.log', 'wt') as log:
+        p = subprocess.Popen(
+            [sys.executable,
+             "sample/ziti-echo-server/ziti-echo-server.py",
+             identity, service_name],
+            stdout=log, stderr=subprocess.STDOUT, env=env,
+            text=True)
+    logger.info("started echo server subprocess with PID %d", p)
+    time.sleep(3)
     yield
-    task.cancel()
-    thread.join()
-
-
-import asyncio
-from typing import AsyncGenerator
-import pytest
-import pytest_asyncio
-
-
-# 1. Define a dummy echo handler for our server
-async def echo_handler(reader: asyncio.StreamReader, writer: asyncio.StreamWriter) -> None:
-    while True:
-        data = await reader.read(100)
-        if not data:
-            break
-        writer.write(data)
-        await writer.drain()
-        writer.write(data)
-        await writer.drain()
-
-
-# 2. Build the async server fixture
-@pytest_asyncio.fixture
-async def echo_server() -> AsyncGenerator[str, None]:
-    host = "127.0.0.1"
-
-    # Start the server using the provided background event loop
-    server = await asyncio.start_server(echo_handler, host, port=8080)
-    logger.info(f"server {server.sockets[0].getsockname()}")
-    # Yield the address to the test functions
-    yield server.sockets[0].getsockname()
-
-    # Teardown: Stop the server cleanly after the test finishes
-    server.close()
-    await server.wait_closed()
-
-
-# 3. Write your async test case
-@pytest.mark.asyncio
-async def test_echo_server(tcp_server: str):
-    # Split out host and port from the fixture string
-    _, host_port = tcp_server.split("//")
-    host, port = host_port.split(":")
-
-    # Act: Connect to the server spun up by the fixture
-    reader, writer = await asyncio.open_connection(host, int(port))
-    writer.write(b"Hello Server")
-    await writer.drain()
-
-    response = await reader.read(100)
-    assert response == b"Hello Server"
-
-    writer.close()
-    await writer.wait_closed()
-
+    p.terminate()
+    try:
+        p.wait(10)
+    except subprocess.TimeoutExpired:
+        logger.warning("echo server did not terminate in time, killing")
+        p.kill()
