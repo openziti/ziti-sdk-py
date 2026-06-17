@@ -72,6 +72,15 @@ jobs:
           group_suite: 'true'
           report_paths: testdata/test-*.xml
 
+      - name: update test data
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.spec.name }}-${{ steps.ziti.outputs.version }}-testdata
+          path: |
+            ./testdata/**/*
+            !./testdata/*current/*
+
       - name: Build distro
         run: |
           python setup.py sdist
@@ -91,6 +100,7 @@ jobs:
       - name: Download artifacts
         uses: actions/download-artifact@v8
         with:
+          name: openziiti-sdist
           path: download
 
       - name: check
