@@ -1,0 +1,22 @@
+[tools.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+pytest_plugins = [
+    "pytest-env",
+    "pytest-asyncio",
+]
+[pytest]
+addopts = [
+    "--basetemp=testdata",
+    "--junitxml=testdata/test-results.xml",
+]
+python_files = [
+    "*_test.py",
+    "test_*.py"
+]
+asyncio_mode = "auto"
+junit_family = "xunit2"
+junit_suite_name = "pytest"
+markers = ["require_ziti: mark test as requiring version of ziti to run"]
+
+

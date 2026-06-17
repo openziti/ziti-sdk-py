@@ -22,14 +22,16 @@ def signal_handler(signum, frame):
     sys.exit(0)
 
 def run(ziti_id, service):
-    ztx = openziti.load(ziti_id)
+    ztx, _ = openziti.load(ziti_id)
     server = ztx.bind(service)
     server.listen()
+    server.setblocking(True)
 
     while True:
         print('beginning accept')
         conn, peer = server.accept()
         print(f'processing incoming client[{peer}]')
+        conn.setblocking(True)
         with conn:
             count = 0
             while True:

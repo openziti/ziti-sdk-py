@@ -15,6 +15,7 @@
 # pylint: disable=no-member
 
 import ctypes
+import errno
 import os
 import platform
 import socket
@@ -33,7 +34,13 @@ else:
     raise ImportError("could not load ziti shared library")
 
 zitilib_path = _mod_path + f'/lib/{LIBNAME}'
-ziti = ctypes.CDLL(zitilib_path)
+ziti = ctypes.CDLL(zitilib_path, use_errno=True)
+
+last_error = ctypes.get_errno
+if osname == 'windows':
+    ws2lib = ctypes.WinDLL("ws2_32", use_last_error=True)
+    ws2lib.WSAGetLastError.restype = ctypes.c_int
+    last_error = ws2lib.WSAGetLastError
 
 
 class _Ver(ctypes.Structure):
@@ -241,16 +248,19 @@ def errorstr(code):
 
 def check_error(code):
     if code != 0:
+        err_no = last_error()
         err = _ziti_lasterr()
+
+        if err_no in [socket.EWOULDBLOCK, socket.EAGAIN, errno.EINPROGRESS]:
+            raise BlockingIOError()
+
         if err < 0:
             msg = _ziti_errorstr(err).decode(encoding='utf-8')
             raise Exception(err, msg)
 
-        if err in [socket.EWOULDBLOCK, socket.EAGAIN]:
-            raise BlockingIOError()
-
-        msg = os.strerror(err)
-        raise OSError(err, msg)
+        if err_no != 0:
+            msg = os.strerror(err_no)
+            raise OSError(err_no, msg)
 
 
 def init():

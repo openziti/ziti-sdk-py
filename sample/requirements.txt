@@ -4,3 +4,4 @@ flask
 waitress
 urllib3
 setuptools
+aiohttp

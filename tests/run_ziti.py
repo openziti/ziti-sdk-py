@@ -162,7 +162,13 @@ def create_and_enroll_identities(ziti):
     run(rf"{ziti} edge enroll ./flasksvr.jwt")
 
 def create_service(ziti):
-    run(rf"{ziti} edge create service httpbin.ziti")
+    cfg = {
+        "portRanges": [ {"high": 80, "low": 80}],
+        "protocols": ["tcp"],
+        "addresses": ["httpbin.ziti"]
+    }
+    run(rf"{ziti} edge create config httpbin.ziti.intercept intercept.v1 '{json.dumps(cfg)}'")
+    run(rf"{ziti} edge create service httpbin.ziti -c httpbin.ziti.intercept")
     run(rf"{ziti} edge create service-policy httpbin.ziti-bind Bind --service-roles \"@httpbin.ziti\" --identity-roles \"@flasksvr\"")
     run(rf"{ziti} edge create service-policy httpbin.ziti-dial Dial --service-roles \"@httpbin.ziti\" --identity-roles \"@pytest\"")
 
