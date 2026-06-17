@@ -46,7 +46,7 @@ class ZitiContext:
         :return: socket connected to the service
         """
         fd = zitilib.ziti_socket(socket.SOCK_STREAM)
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0, fd)
+        s = socket.socket(family=socket.AF_UNSPEC, type=socket.SOCK_STREAM, fileno=fd)
         s.setblocking(blocking)
         if isinstance(addr, str):
             zitilib.connect(fd, self._ctx, service=addr, terminator=terminator)

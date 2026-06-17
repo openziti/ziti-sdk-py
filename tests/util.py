@@ -29,8 +29,7 @@ ziti_executable = os.environ.get("ZITI_CLI", "ziti")
 def ziti_edge(*args, check=True):
     """Run a ``ziti edge`` subcommand."""
     result = subprocess.run(
-        executable=ziti_executable,
-        args = ["edge"] + list(args),
+        [ziti_executable, "edge"] + list(args),
         capture_output=True, text=True,
     )
     logger.info("ziti edge %s -> rc=%d", " ".join(args), result.returncode)

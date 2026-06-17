@@ -67,6 +67,9 @@ class ZitiSocket(PySocket):
         if type == -1:
             type = socket.SOCK_STREAM
 
+        if family == -1:
+            family = socket.AF_UNSPEC
+
         self._zitifd = zitilib.ziti_socket(type)
         super().__init__(family, type, proto, self._zitifd)
 
