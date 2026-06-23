@@ -18,8 +18,8 @@ from socket import SOCK_STREAM,SHUT_WR
 
 
 if __name__ == '__main__':
-    # Use the provided intercept address or a default address from ZEDS
-    intercept_address = 'httpbin.ziti'
+    # Use the provided intercept address or a default address from demo network
+    intercept_address = 'demo.service.ziti'
     if len(sys.argv) > 1:
         intercept_address = sys.argv[1]
     # Use the provided port
@@ -29,12 +29,12 @@ if __name__ == '__main__':
     print("Ziti SDK version = {0}".format(openziti.version()))
     sock = openziti.socket(type = SOCK_STREAM)
     sock.connect((intercept_address,
-                  80))
-    msg = """GET /json HTTP/1.1\r
+                  int(intercept_port)))
+    msg = """GET / HTTP/1.1\r
 Accept: */*\r
 Accept-Encoding: gzip, deflate\r
 Connection: keep-alive\r
-Host: httpbin.org\r
+Host: demo.service.ziti\r
 User-Agent: HTTPie/3.1.0\r
 \r
 """

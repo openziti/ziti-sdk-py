@@ -43,7 +43,7 @@ python sample-aiohttp.py <identity_file> <url>
 
 With Ziti identity:
 ```bash
-python sample-aiohttp.py ~/.ziti/identities/my-identity.jwt http://my.service.ziti/api
+python sample-aiohttp.py ~/.ziti/identities/my-identity.json http://my.service.ziti/api
 ```
 
 ---
