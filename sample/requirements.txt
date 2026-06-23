@@ -5,3 +5,5 @@ waitress
 urllib3
 setuptools
 aiohttp
+uvicorn
+FastAPI

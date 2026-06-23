@@ -14,7 +14,6 @@
 import sys
 
 import openziti
-import zitilib
 from openziti import ZitiContext
 
 def auth(cfg: str) -> None:
@@ -53,7 +52,7 @@ def auth(cfg: str) -> None:
         print("Authentication successful")
         print(f"Ziti version: {openziti.version()}")
     else:
-        print(f"Authentication failed with error code: {err}/{zitilib.errorstr(err)}")
+        print(f"Authentication failed with error code: {err}/{openziti.strerror(err)}")
 
 if __name__ == '__main__':
     cfg = sys.argv[1]
