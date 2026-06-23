@@ -66,6 +66,8 @@ class BackendConfig(config.Config):
 
 
 def main(id: str, svc: str):
+    if sys.platform == "win32":
+        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
     config = BackendConfig(
         app,
         identity_file=id,
