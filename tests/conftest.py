@@ -80,9 +80,9 @@ def quickstart(tmpdir_factory):
         t = threading.Thread(target=_reader, daemon=True)
         t.start()
 
-        if not ready.wait(timeout=30):
+        if not ready.wait(timeout=90):
             proc.kill()
-            pytest.fail("quickstart did not become ready within 30s")
+            pytest.fail("quickstart did not become ready within 90s")
 
         yield proc
 
@@ -166,12 +166,12 @@ def uvicorn_process(ziti_setup, tmp_path):
              identity, service_name],
             stdout=log, stderr=subprocess.STDOUT, env=env,
             text=True)
-        logger.info("started echo server subprocess with PID %d", p.pid)
+        logger.info("started uvicorn server subprocess with PID %d", p.pid)
         time.sleep(3)
         yield
         p.terminate()
         try:
             p.wait(10)
         except subprocess.TimeoutExpired:
-            logger.warning("echo server did not terminate in time, killing")
+            logger.warning("uvicorn server did not terminate in time, killing")
             p.kill()

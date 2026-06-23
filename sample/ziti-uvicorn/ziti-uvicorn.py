@@ -76,7 +76,7 @@ def main(id: str, svc: str):
     asyncio.run(server_instance.serve())
 
 
-identity = sys.argv[1]
-service = sys.argv[2]
 if __name__ == "__main__":
+    identity = sys.argv[1]
+    service = sys.argv[2]
     main(identity, service)

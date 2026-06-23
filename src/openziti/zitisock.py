@@ -91,7 +91,7 @@ class ZitiSocket(PySocket):
                 if not events:
                     raise TimeoutError(f"Connection to {addr} timed out")
                 ev = events[0]
-                if ev[1] == select.POLLERR:
+                if ev[1] & (select.POLLERR | select.POLLHUP):
                     err = self.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
                     raise OSError(err, f"Connection to {addr} failed: {err}")
             except Exception:
