@@ -1,11 +1,20 @@
 import logging
 
+import pytest
 import pytest_asyncio
 from requests import request
 
 import openziti
 
 logger = logging.getLogger()
+
+def test_connect_timeout(echo_server_process, ziti_setup):
+    clt_id = ziti_setup["client"]
+    (ztx, rc) = openziti.load(clt_id)
+    assert rc == 0
+    with pytest.raises(TimeoutError):
+        ztx.connect(ziti_setup["service"], timeout=0.001)
+
 
 def test_echo(echo_server_process, ziti_setup):
     clt_id = ziti_setup["client"]
