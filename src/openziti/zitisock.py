@@ -19,6 +19,8 @@ from socket import socket as PySocket
 from ssl import SSLContext
 from typing import Tuple, Union
 
+import select
+
 from . import context, zitilib
 
 
@@ -81,8 +83,18 @@ class ZitiSocket(PySocket):
             try:
                 zitilib.connect_addr(self._zitifd, addr)
             except (BlockingIOError, InterruptedError):
-                raise
-            except Exception as e:
+                if self.timeout is None or self.timeout == 0:
+                    raise
+                p = select.poll()
+                p.register(self._zitifd, select.POLLOUT)
+                events = p.poll(self.timeout * 1000)
+                if not events:
+                    raise TimeoutError(f"Connection to {addr} timed out")
+                ev = events[0]
+                if ev[1] == select.POLLERR:
+                    err = self.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+                    raise OSError(err, f"Connection to {addr} failed: {err}")
+            except Exception:
                 PySocket.close(self)
                 self._zitifd = None
                 PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
