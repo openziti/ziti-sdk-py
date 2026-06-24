@@ -2,15 +2,17 @@
 
 ## Setup
 
-You will need an OpenZiti network to use the examples. If you don't already have one running, you can easily spin up a local development network using our bootstrap demo script:
+You will need an OpenZiti network to use the examples. 
+If you don't already have one running, you can easily spin up a local development network using our bootstrap demo script:
 
 ```bash
 python demo-run.py
 ```
 
-This script will start a local controller and router using the `ziti` CLI (which must be installed in your `PATH`), configure the `demo-service` (intercepting `demo.service.ziti:80`), and enroll two local test identities: `demo-client.json` and `demo-server.json`.
+This script will start a local controller and router using the `ziti` CLI (which must be installed in your `PATH`), 
+configure the `demo-service` (intercepting `demo.service.ziti:80`), 
+and enroll two local test identities: `demo-client.json` and `demo-server.json`.
 
-Alternatively, you can follow our [express install guides](https://docs.openziti.io/docs/learn/quickstarts/network/) to set up a custom network, or try cloud Ziti for free (check out more [here](https://docs.openziti.io/)).
 
 ### Installing the SDK
 
@@ -32,10 +34,10 @@ First, you'll need the dependent libraries used in the examples.
 
 ### Get and Enroll an Identity
 
-You need an [identity](https://docs.openziti.io/docs/learn/core-concepts/identities/overview) to be used by the example 
+You need an [identity](https://netfoundry.io/docs/openziti/learn/core-concepts/identities/overview) to be used by the example 
 application. If you ran `python demo-run.py`, the required identities (`demo-client.json` and `demo-server.json`) are automatically created and enrolled for you in the current directory.
 
-Otherwise, you can find all the information you need for creating and enrolling an identity in the [doc here](https://docs.openziti.io/docs/learn/core-concepts/identities/overview#creating-an-identity).
+Otherwise, you can find all the information you need for creating and enrolling an identity in the [doc here](https://netfoundry.io/docs/openziti/learn/core-concepts/identities/overview#creating-an-identity).
 
 Alternatively, if you have an identity enrollment token (JWT file), you can perform the enrollment with the Python SDK.
 
@@ -57,8 +59,8 @@ output more or less log information. A `ZITI_LOG` level of `6` will output `TRAC
 
 ### Network
 
-Your network overlay needs to have a [Service](https://docs.openziti.io/docs/learn/core-concepts/services/overview), 
-and the proper [Service Configurations](https://docs.openziti.io/docs/learn/core-concepts/config-store/overview), the 
+Your network overlay needs to have a [Service](https://netfoundry.io/docs/openziti/learn/core-concepts/services/overview), 
+and the proper [Service Configurations](https://netfoundry.io/docs/openziti/learn/core-concepts/config-store/overview), the 
 documentation for which is linked.
 
 ## Examples

@@ -21,9 +21,9 @@ python ziti-echo-server.py </path/to/id.json> <name-of-service>
 ```
 
 ## Testing the Example :clipboard:
-Netcat can be used to test this however, in order to connect to the service over netcat you'll need an [identity](https://docs.openziti.io/docs/learn/core-concepts/identities/overview) 
+Netcat can be used to test this however, in order to connect to the service over netcat you'll need an [identity](https://netfoundry.io/docs/openziti/learn/core-concepts/identities/overview) 
 and a tunneler for the device running the netcat commands. An easy way to set this up is to create an identity that has 
-dial access on the intended service. Then run a [tunneler](https://docs.openziti.io/docs/reference/tunnelers/) on your 
+dial access on the intended service. Then run a [tunneler](https://netfoundry.io/docs/openziti/how-to-guides/tunnelers/) on your 
 platform, and enroll the identity.
 
 If we use netcat to connect to the intercept address and send some data, we will see a response of the exact same data 

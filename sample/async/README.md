@@ -56,5 +56,5 @@ python sample-aiohttp.py ~/.ziti/identities/my-identity.json http://my.service.z
 
 ---
 
-For more information about OpenZiti, visit https://docs.openziti.io/
+For more information about OpenZiti, visit https://netfoundry.io/docs/openziti
 

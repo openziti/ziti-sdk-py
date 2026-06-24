@@ -34,7 +34,7 @@ OpenZiti is an open-source project that provides secure, zero-trust networking f
 
 More specifically, the SDK allows you to integrate zero trust at the application level. This means your data is never 
 exposed outside the application environment providing you with end-to-end encryption for ultimate security. See other 
-zero trust models [here](https://docs.openziti.io/docs/learn/core-concepts/zero-trust-models/overview).
+zero trust models [here](https://netfoundry.io/docs/openziti/learn/core-concepts/zero-trust-models/overview/).
 
 <p align="center">
 <img src="./images/ztaa-model-overview.png" alt="Zero-trust-application-access">
@@ -42,8 +42,10 @@ zero trust models [here](https://docs.openziti.io/docs/learn/core-concepts/zero-
 
 ## Getting Started
 
-If you don't already have an OpenZiti network running, you can follow our [express install guides](https://docs.openziti.io/docs/learn/quickstarts/network/) 
-to set up the network that fits your needs. Or, you can try [CloudZiti](https://netfoundry.io/pricing/) for free, check out more [here](https://docs.openziti.io/).
+See the [get started guide](https://netfoundry.io/docs/openziti/get-started/) to learn how to deploy your own overlay.
+
+Or, you can try [CloudZiti](https://netfoundry.io/pricing/) for free, 
+check out more [here](https://netfoundry.io/docs/openziti/).
 
 ### Installing the SDK
 
@@ -132,14 +134,14 @@ Try it out yourself with one of our [examples](sample%2FREADME.md)
 Please use these community resources for getting help. We use GitHub [issues](https://github.com/openziti/ziti-sdk-py/issues)
 for tracking bugs and feature requests and have limited bandwidth to address them.
 
-- Read the [offical docs](https://docs.openziti.io/docs/learn/introduction/)
+- Read the [offical docs](https://netfoundry.io/docs/openziti/learn/introduction/)
 - Join our [Developer Community](https://openziti.org)
 - Participate in discussion on [Discourse](https://openziti.discourse.group/)
 
 ## Contributing
 
 Do you want to get your hands dirty and help make OpenZiti better? Contribute to the OpenZiti open-source project 
-through bug reports, bug fixes, documentation, etc. Check out our guide on contributing to our projects [here](https://docs.openziti.io/policies/CONTRIBUTING.html).
+through bug reports, bug fixes, documentation, etc. Check out our guide on contributing to our projects [here](https://netfoundry.io/docs/openziti/policies/CONTRIBUTING.html).
 
 ## License
 
