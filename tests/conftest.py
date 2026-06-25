@@ -80,9 +80,9 @@ def quickstart(tmpdir_factory):
         t = threading.Thread(target=_reader, daemon=True)
         t.start()
 
-        if not ready.wait(timeout=300):
+        if not ready.wait(timeout=90):
             proc.kill()
-            pytest.fail("quickstart did not become ready within 300s")
+            pytest.fail("quickstart did not become ready within 90s")
 
         yield proc
 
@@ -124,13 +124,15 @@ def ziti_setup(quickstart, request, tmp_path):
     return dict(
         client = client_json,
         server = server_json,
-        service = name)
+        service = name,
+        intercept = intercept,
+    )
 
 
 @pytest.fixture
 def echo_server_process(ziti_setup, tmp_path):
-    identity = ziti_setup["server"]
-    service_name = ziti_setup["service"]
+    identity = str(ziti_setup["server"])
+    service_name = str(ziti_setup["service"])
     env = os.environ.copy()
     env["ZITI_LOG"] = "5"
     with open(f'{tmp_path}/echo.log', 'wt') as log:
@@ -140,12 +142,36 @@ def echo_server_process(ziti_setup, tmp_path):
              identity, service_name],
             stdout=log, stderr=subprocess.STDOUT, env=env,
             text=True)
-    logger.info("started echo server subprocess with PID %d", p)
-    time.sleep(3)
-    yield
-    p.terminate()
-    try:
-        p.wait(10)
-    except subprocess.TimeoutExpired:
-        logger.warning("echo server did not terminate in time, killing")
-        p.kill()
+        logger.info("started echo server subprocess with PID %d", p.pid)
+        time.sleep(3)
+        yield
+        p.terminate()
+        try:
+            p.wait(10)
+        except subprocess.TimeoutExpired:
+            logger.warning("echo server did not terminate in time, killing")
+            p.kill()
+
+
+@pytest.fixture
+def uvicorn_process(ziti_setup, tmp_path):
+    identity = str(ziti_setup["server"])
+    service_name = str(ziti_setup["service"])
+    env = os.environ.copy()
+    env["ZITI_LOG"] = "5"
+    with open(f'{tmp_path}/uvicorn.log', 'wt') as log:
+        p = subprocess.Popen(
+            [sys.executable,
+             "sample/ziti-uvicorn/ziti-uvicorn.py",
+             identity, service_name],
+            stdout=log, stderr=subprocess.STDOUT, env=env,
+            text=True)
+        logger.info("started uvicorn server subprocess with PID %d", p.pid)
+        time.sleep(3)
+        yield
+        p.terminate()
+        try:
+            p.wait(10)
+        except subprocess.TimeoutExpired:
+            logger.warning("uvicorn server did not terminate in time, killing")
+            p.kill()

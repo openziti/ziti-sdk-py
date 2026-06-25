@@ -20,10 +20,10 @@ if __name__ == '__main__':
     if len(sys.argv) > 1:
         service = sys.argv[1]
     else:
-        service = 'httpbin.ziti'
+        service = 'demo.service.ziti'
 
     with openziti.monkeypatch():
-        print(f"requesting http://{service}/json")
-        r = requests.get(f"http://{service}/json")
+        print(f"requesting http://{service}/")
+        r = requests.get(f"http://{service}/", timeout=60)
         print(r.headers)
         print(r.text)

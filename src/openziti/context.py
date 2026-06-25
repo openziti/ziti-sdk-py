@@ -33,7 +33,7 @@ class ZitiContext:
             raise TypeError("ctx is not a valid python void pointer type")
         self._ctx = ctx
 
-    def connect(self, addr, terminator=None, blocking=True) -> socket.socket:
+    def connect(self, addr: str | tuple[str,int], terminator=None, timeout: float | None = None) -> socket.socket:
         """
         Connect to a Ziti service.
         Either service name or intercept address(host,port)
@@ -43,15 +43,16 @@ class ZitiContext:
             service intercept address(tuple[host, port])
         :param terminator: specific terminator for the given service,
             ignored if [addr] is an intercept address
+        :param timeout: socket timeout in seconds
         :return: socket connected to the service
         """
         fd = zitilib.ziti_socket(socket.SOCK_STREAM)
-        s = socket.socket(family=socket.AF_UNSPEC, type=socket.SOCK_STREAM, fileno=fd)
-        s.setblocking(blocking)
+        s = zitisock.ZitiSocket(family=socket.AF_UNSPEC, type=socket.SOCK_STREAM, fileno=fd)
+        s.settimeout(timeout)
         if isinstance(addr, str):
-            zitilib.connect(fd, self._ctx, service=addr, terminator=terminator)
+            s.connect_with_ztx(self._ctx, addr, terminator)
         elif isinstance(addr, tuple):
-            zitilib.connect_addr(fd, addr)
+            s.connect(addr)
         else:
             s.close()
             raise TypeError(f'unsupported address {addr}')

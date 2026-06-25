@@ -1,5 +1,7 @@
-requests
-semver
+FastAPI
 pytest
 pytest-asyncio
 pytest-env
+requests
+semver
+uvicorn

@@ -253,6 +253,8 @@ def check_error(code):
 
         if err_no in [socket.EWOULDBLOCK, socket.EAGAIN, errno.EINPROGRESS]:
             raise BlockingIOError()
+        if err_no == errno.EINTR:
+            raise InterruptedError()
 
         if err < 0:
             msg = _ziti_errorstr(err).decode(encoding='utf-8')

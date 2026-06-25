@@ -28,6 +28,7 @@ socket = zitisock.ZitiSocket
 getaddrinfo = zitisock.ziti_getaddrinfo
 ZitiContext = context.ZitiContext
 open_connection = zitisock.open_ziti_connection
+strerror = zitilib.errorstr
 
 
 for identity in _ziti_identities:

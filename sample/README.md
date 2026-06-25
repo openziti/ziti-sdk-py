@@ -2,8 +2,17 @@
 
 ## Setup
 
-You will need an OpenZiti network to use the examples. If you don't already have one running, you can follow our [express install guides](https://docs.openziti.io/docs/learn/quickstarts/network/)
-to set up the network that fits your needs. You could also use [ZEDS](https://zeds.openziti.org) (Ziti Edge Developer Sandbox) or, you can try cloud Ziti for free, check out more [here](https://docs.openziti.io/).
+You will need an OpenZiti network to use the examples. 
+If you don't already have one running, you can easily spin up a local development network using our bootstrap demo script:
+
+```bash
+python demo-run.py
+```
+
+This script will start a local controller and router using the `ziti` CLI (which must be installed in your `PATH`), 
+configure the `demo-service` (intercepting `demo.service.ziti:80`), 
+and enroll two local test identities: `demo-client.json` and `demo-server.json`.
+
 
 ### Installing the SDK
 
@@ -25,9 +34,10 @@ First, you'll need the dependent libraries used in the examples.
 
 ### Get and Enroll an Identity
 
-You need an [identity](https://docs.openziti.io/docs/learn/core-concepts/identities/overview) to be used by the example 
-application. If using [ZEDS](https://zeds.openziti.org) you can grab one from there, otherwise you can find all the
-information you need for creating and enrolling an identity in the [doc here](https://docs.openziti.io/docs/learn/core-concepts/identities/overview#creating-an-identity).
+You need an [identity](https://netfoundry.io/docs/openziti/learn/core-concepts/identities/overview) to be used by the example 
+application. If you ran `python demo-run.py`, the required identities (`demo-client.json` and `demo-server.json`) are automatically created and enrolled for you in the current directory.
+
+Otherwise, you can find all the information you need for creating and enrolling an identity in the [doc here](https://netfoundry.io/docs/openziti/learn/core-concepts/identities/overview#creating-an-identity).
 
 Alternatively, if you have an identity enrollment token (JWT file), you can perform the enrollment with the Python SDK.
 
@@ -49,17 +59,14 @@ output more or less log information. A `ZITI_LOG` level of `6` will output `TRAC
 
 ### Network
 
-Your network overlay needs to have a [Service](https://docs.openziti.io/docs/learn/core-concepts/services/overview), 
-and the proper [Service Configurations](https://docs.openziti.io/docs/learn/core-concepts/config-store/overview), the 
+Your network overlay needs to have a [Service](https://netfoundry.io/docs/openziti/learn/core-concepts/services/overview), 
+and the proper [Service Configurations](https://netfoundry.io/docs/openziti/learn/core-concepts/config-store/overview), the 
 documentation for which is linked.
-
-If you happen to be using [ZEDS](https://zeds.openziti.org) you are in luck, these examples will use default services 
-that are already implemented in the developer sandbox.
 
 ## Examples
 
 > **Note**
-> All but the Flazk example scripts use predefined services in [ZEDS](https://zeds.openziti.org) by default.
+> The example scripts are configured to use the local `demo.service.ziti` service by default, which can be easily spun up using `python demo-run.py`.
 
 ### [Flazk](flask-of-ziti) <img src="../images/python-flask.jpg" width="2%">
 
@@ -89,6 +96,10 @@ An example showing the use of a _raw_ Ziti socket.
 ### [Ziti urllib3](ziti-urllib3)
 
 An example showing how to monkeypatch `urllib3` to fetch a Ziti service using HTTP.
+
+### [Ziti Uvicorn](ziti-uvicorn)
+
+An example showing how to run a FastAPI ASGI application served via Uvicorn listening directly on the OpenZiti network.
 
 ### [S3 Log Uploader](sample/s3z)
 

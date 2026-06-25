@@ -12,9 +12,9 @@ If you haven't already installed them, you'll need the dependent libraries used 
   ```
 
 ## Running the Example :arrow_forward:
-We can test this example with `curl` however, in order to connect to the service over netcat you'll need an [identity](https://docs.openziti.io/docs/learn/core-concepts/identities/overview) 
+We can test this example with `curl` however, in order to connect to the service over netcat you'll need an [identity](https://netfoundry.io/docs/openziti/learn/core-concepts/identities/overview) 
 and a tunneler for the device running the curl command. An easy way to set this up is to create an identity that has 
-dial access on the intended service. Then run a [tunneler](https://docs.openziti.io/docs/reference/tunnelers/) on your 
+dial access on the intended service. Then run a [tunneler](https://netfoundry.io/docs/openziti/how-to-guides/tunnelers/) on your 
 platform, and enroll the identity.
 
 ### Example:
