@@ -8,6 +8,8 @@ import openziti
 
 logger = logging.getLogger()
 
+
+@pytest.mark.skip(reason="c-sdk connects immediately even if service not available (ECONNRESET is issued later)")
 def test_connect_timeout(echo_server_process, ziti_setup):
     clt_id = ziti_setup["client"]
     (ztx, rc) = openziti.load(clt_id)
@@ -34,7 +36,7 @@ async def test_open_connection(echo_server_process, ziti_setup):
     print("connecting with identity ", clt_id)
     (ztx, rc) = openziti.load(clt_id)
     assert rc == 0
-    r,w = await ztx.open_connection(ziti_setup["service"])
+    r, w = await ztx.open_connection(ziti_setup["service"])
     w.write(b"hello")
     await w.drain()
     resp = await r.read(1024)

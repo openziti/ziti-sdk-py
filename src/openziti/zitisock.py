@@ -17,12 +17,11 @@ from asyncio import StreamWriter, StreamReader, StreamReaderProtocol
 from socket import getaddrinfo as PyGetaddrinfo
 from socket import socket as PySocket
 from ssl import SSLContext
-from typing import Tuple, Union
+from typing import Tuple, Union, Callable
 
 import select
 
 from . import context, zitilib
-
 
 def process_bindings(orig):
     """normalize binding addresses"""
@@ -75,30 +74,60 @@ class ZitiSocket(PySocket):
         self._zitifd = zitilib.ziti_socket(type)
         super().__init__(family, type, proto, self._zitifd)
 
-    def connect(self, addr: tuple[str,int]) -> None:
-        if self._zitifd is None:
-            pass
+    def _do_poll(self, to: float | None, ex: Exception) -> None:
+        if to == 0:
+            raise ex
+
+        if hasattr(select, 'poll'):
+            p = select.poll()
+            p.register(self.fileno(), select.POLLOUT)
+            events = p.poll(None if to is None else to * 1000)
+            if not events:
+                raise TimeoutError(f"Operation timed out after {to} seconds")
+            ev = events[0]
+            if ev[1] & (select.POLLERR | select.POLLHUP):
+                err = self.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+                raise OSError(err, f"failed to connect: {err}")
+        else:  # win32 has no select.poll
+            _, wfds, efds = select.select([], [self.fileno()], [self.fileno()], to)
+            if len(efds) > 0:
+                err = self.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
+                raise OSError(err, f"failed to connect: {err}")
+            if len(wfds) == 0:
+                raise TimeoutError(f"Operation timed out after {to} seconds")
+
+    def _do_connect(self, conn_fn: Callable[[int], None]) -> None:
+        to = self.gettimeout()
+        bl = self.getblocking()
+        fd = self.fileno()
+        try:
+            if to is not None:
+                self.setblocking(False)
+            conn_fn(fd)
+        except (BlockingIOError, InterruptedError) as berr:
+            self._do_poll(to, berr)
+        finally:
+            # reset original state
+            self.setblocking(bl)
+            self.settimeout(to)
+
+    def connect_with_ztx(self, ztx_handle: int, service: str, terminator: str | None = None) -> None:
+        self._do_connect(lambda fd: zitilib.connect(fd, ztx_handle, service, terminator))
+
+    def connect(self, addr: tuple[str, int]) -> None:
         if isinstance(addr, tuple):
             self._ziti_peer = addr
             try:
-                zitilib.connect_addr(self._zitifd, addr)
-            except (BlockingIOError, InterruptedError):
-                if self.timeout is None or self.timeout == 0:
-                    raise
-                p = select.poll()
-                p.register(self._zitifd, select.POLLOUT)
-                events = p.poll(self.timeout * 1000)
-                if not events:
-                    raise TimeoutError(f"Connection to {addr} timed out")
-                ev = events[0]
-                if ev[1] & (select.POLLERR | select.POLLHUP):
-                    err = self.getsockopt(socket.SOL_SOCKET, socket.SO_ERROR)
-                    raise OSError(err, f"Connection to {addr} failed: {err}")
+                self._do_connect(lambda fd: zitilib.connect_addr(fd, addr))
+            except (BlockingIOError, InterruptedError, TimeoutError):
+                raise
             except Exception:
                 PySocket.close(self)
                 self._zitifd = None
-                PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto)
+                PySocket.__init__(self, self._ziti_af, self._ziti_type, self._ziti_proto, fileno=None)
                 PySocket.connect(self, addr)
+        else:
+            raise TypeError(f"unsupported address {addr}")
 
     def close(self) -> None:
         try:
@@ -199,4 +228,3 @@ async def open_ziti_connection(
     transport, _ = await loop.create_connection(lambda: protocol, sock=s, ssl=ssl, server_hostname=server_hostname)
     writer = StreamWriter(transport=transport, protocol=protocol, reader=reader, loop=loop)
     return reader, writer
-
