@@ -1,0 +1,169 @@
+name: Bump ziti SDK
+
+on:
+  schedule:
+    - cron: '43 5 * * *'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: ziti-sdk-c release tag to bump to (default is the highest upstream release)
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+  actions: write
+
+concurrency:
+  group: bump-ziti-sdk
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      UPSTREAM: openziti/ziti-sdk-c
+      INCLUDE_PRERELEASES: 'true'
+      INPUT_VERSION: ${{ inputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - name: open a PR for the newest ziti-sdk-c release
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          version_file=setup.cfg
+          current=$(sed -nE 's/^ziti_sdk_version *= *([^ ]+).*/\1/p' "${version_file}")
+          if [ -z "${current}" ]; then
+            echo "::error::ziti_sdk_version not found in ${version_file}"
+            exit 1
+          fi
+
+          if [ -n "${INPUT_VERSION:-}" ]; then
+            latest="${INPUT_VERSION#v}"
+            gh release view "${latest}" --repo "${UPSTREAM}" > /dev/null
+          else
+            prerelease_flag=''
+            if [ "${INCLUDE_PRERELEASES:-true}" != "true" ]; then
+              prerelease_flag='--exclude-pre-releases'
+            fi
+            # highest version, not newest date: upstream also cuts maintenance releases from older lines
+            latest=$(gh release list --repo "${UPSTREAM}" --limit 100 --exclude-drafts ${prerelease_flag} --json tagName --jq '.[].tagName' \
+              | grep -E '^[0-9]+(\.[0-9]+)+$' | sort -V | tail -n1) || true
+            if [ -z "${latest}" ]; then
+              echo "::error::no releases found in ${UPSTREAM}"
+              exit 1
+            fi
+            newest=$(printf '%s\n%s\n' "${current}" "${latest}" | sort -V | tail -n1)
+            if [ "${newest}" = "${current}" ]; then
+              echo "ziti-sdk-c ${current} is up to date (highest upstream release: ${latest})"
+              exit 0
+            fi
+          fi
+          if [ "${latest}" = "${current}" ]; then
+            echo "ziti-sdk-c is already ${current}"
+            exit 0
+          fi
+
+          branch="bump-ziti-sdk-${latest}"
+          if [ "$(gh pr list --head "${branch}" --state all --json number --jq length)" != "0" ]; then
+            echo "a PR for ${branch} already exists (open, closed or merged); nothing to do"
+            exit 0
+          fi
+
+          # setup.py downloads one ziti-sdk-<os>-<arch>.zip per platform; release assets can land after the release does,
+          # so wait for the next run when the new release lacks an archive the current one has
+          zips() {
+            gh release view "$1" --repo "${UPSTREAM}" --json assets --jq '.assets[].name | select(test("^ziti-sdk-.*[.]zip$"))' | sort
+          }
+          missing=$(comm -23 <(zips "${current}" || true) <(zips "${latest}"))
+          if [ -n "${missing}" ]; then
+            echo "::warning::${latest} lacks SDK archives that ${current} has ($(echo ${missing})); will retry on the next run"
+            exit 0
+          fi
+
+          # best effort: the tlsuv version this C SDK release pulls in
+          pin() {
+            gh api "repos/$1/contents/CMakeLists.txt?ref=$2" -H 'Accept: application/vnd.github.raw' 2>/dev/null | sed -nE "$3" | head -n1
+          }
+          tlsuv_expr='s/^ *set\(tlsuv_VERSION "([^"]+)".*/\1/p'
+          tlsuv_from=$(pin "${UPSTREAM}" "${current}" "${tlsuv_expr}") || true
+          tlsuv_to=$(pin "${UPSTREAM}" "${latest}" "${tlsuv_expr}") || true
+
+          work="${RUNNER_TEMP:-/tmp}"
+          body_file="${work}/bump-ziti-sdk-body.md"
+          cat > "${body_file}" <<EOF
+          Bumps \`ziti_sdk_version\` to [${latest}](https://github.com/${UPSTREAM}/releases/tag/${latest}).
+
+          | Dependency | From | To |
+          |---|---|---|
+          | ziti-sdk-c | ${current} | ${latest} |
+          | tlsuv (via ziti-sdk-c) | ${tlsuv_from:-?} | ${tlsuv_to:-?} |
+          EOF
+
+          new_file="${work}/setup.cfg.new"
+          sed -E "s/^(ziti_sdk_version *= *).*/\1${latest}/" "${version_file}" > "${new_file}"
+          if cmp -s "${version_file}" "${new_file}"; then
+            echo "::error::${version_file} did not change"
+            exit 1
+          fi
+
+          # GitHub signs commits made through its API, which a runner-side `git commit` cannot do
+          head_sha=$(git rev-parse HEAD)
+          git_api="repos/${GITHUB_REPOSITORY}/git"
+          if gh api "${git_api}/ref/heads/${branch}" > /dev/null 2>&1; then
+            gh api -X PATCH "${git_api}/refs/heads/${branch}" -f sha="${head_sha}" -F force=true > /dev/null
+          else
+            gh api "${git_api}/refs" -f ref="refs/heads/${branch}" -f sha="${head_sha}" > /dev/null
+          fi
+          commit_oid=$(jq -n \
+            --arg repo "${GITHUB_REPOSITORY}" --arg branch "${branch}" --arg oid "${head_sha}" \
+            --arg headline "Bump ziti-sdk-c to ${latest}" --arg path "${version_file}" \
+            --arg contents "$(base64 < "${new_file}" | tr -d '\n')" \
+            '{
+              query: "mutation($input: CreateCommitOnBranchInput!) { createCommitOnBranch(input: $input) { commit { oid } } }",
+              variables: {input: {
+                branch: {repositoryNameWithOwner: $repo, branchName: $branch},
+                message: {headline: $headline},
+                expectedHeadOid: $oid,
+                fileChanges: {additions: [{path: $path, contents: $contents}]}
+              }}
+            }' | gh api graphql --input - --jq '.data.createCommitOnBranch.commit.oid')
+          if [ -z "${commit_oid}" ]; then
+            echo "::error::creating the commit on ${branch} failed"
+            exit 1
+          fi
+          echo "commit ${commit_oid} verified: $(gh api "repos/${GITHUB_REPOSITORY}/commits/${commit_oid}" --jq .commit.verification.verified || echo unknown)"
+
+          pr_url=$(gh pr create --base main --head "${branch}" --title "Bump ziti-sdk-c to ${latest}" --body-file "${body_file}")
+          echo "created ${pr_url}"
+
+          # runs triggered by a PR from github-actions wait for approval; this PR only changes a version line
+          approved=0
+          for attempt in 1 2 3 4 5 6; do
+            sleep "${APPROVE_DELAY:-10}"
+            pending=$(gh run list --event pull_request --branch "${branch}" --json databaseId,conclusion \
+              --jq '.[] | select(.conclusion == "action_required") | .databaseId')
+            if [ -z "${pending}" ]; then
+              [ "${approved}" -gt 0 ] && break
+              continue
+            fi
+            for run_id in ${pending}; do
+              if gh api -X POST "repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/approve" > /dev/null; then
+                approved=$((approved + 1))
+              else
+                echo "::warning::could not approve run ${run_id}"
+              fi
+            done
+          done
+          echo "approved ${approved} pending run(s)"
+
+          # keep one open bump PR: close earlier ones from this job
+          gh pr list --state open --json number,headRefName,author \
+            --jq ".[] | select(.headRefName | startswith(\"bump-ziti-sdk-\")) | select(.author.is_bot) | select(.headRefName != \"${branch}\") | .number" \
+            | while read -r number; do
+            gh pr close "${number}" --delete-branch --comment "Superseded by ${pr_url}"
+          done
