@@ -169,7 +169,10 @@ _login_totp.restype = ctypes.c_int
 
 
 _wait_for_auth = ziti.Ziti_wait_for_auth
-_wait_for_auth.argtypes = [ctypes.c_int32]  # ziti context handle
+_wait_for_auth.argtypes = [
+    ctypes.c_int32,  # ziti context handle
+    ctypes.c_int,  # timeout in ms, 0 is no timeout
+]
 _wait_for_auth.restype = ctypes.c_int
 
 _ziti_socket = ziti.Ziti_socket
