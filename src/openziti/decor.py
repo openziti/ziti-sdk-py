@@ -47,6 +47,9 @@ class MonkeyPatch:
             r = requests.get('http://httpbin.ziti/json')
             print(r.headers)
             print(r.json())
+
+    The patch is applied when the object is created: used in a `with` block it is
+    undone when the block ends, called on its own it stays in place.
     """
     def __init__(self, **kwargs):
         self.orig_socket = sock.socket
@@ -60,6 +63,7 @@ class MonkeyPatch:
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        sock.socket = self.orig_socket
         for m_name, _ in self.orig_methods.items():
             sock.__dict__[m_name] = self.orig_methods[m_name]
 
