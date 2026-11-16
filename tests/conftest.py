@@ -15,6 +15,8 @@
 #  limitations under the License.
 import logging
 import os
+import re
+import secrets
 import subprocess
 import sys
 import threading
@@ -24,7 +26,7 @@ import pytest
 from semver import Version
 
 import openziti
-from .util import create_identity, create_service, enroll_identity, ziti_executable
+from .util import create_identity, create_service, enroll_identity, ziti_edge, ziti_executable
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +126,7 @@ def ziti_setup(quickstart, request, tmp_path):
     return dict(
         client = client_json,
         server = server_json,
+        client_name = client_name,
         service = name,
         intercept = intercept,
     )
@@ -175,3 +178,47 @@ def uvicorn_process(ziti_setup, tmp_path):
         except subprocess.TimeoutExpired:
             logger.warning("uvicorn server did not terminate in time, killing")
             p.kill()
+
+
+# the SDK's external login always asks the idp to redirect to this uri (library/ext_oidc.c in the C SDK)
+IDP_CLIENT_ID = "ziti-test-client"
+IDP_REDIRECT_URI = "http://localhost:20314/auth/callback"
+IDP_SIGNER = "integration-test-signer"
+
+
+@pytest.fixture(scope="session")
+def idp():
+    """OIDC provider for the external JWT tests: ``idp.issuer``, ``idp.add_user(email, password)``."""
+    # imported here so that a venv without authlib only breaks the tests that need the idp
+    from .oidc_idp import OidcIdp
+
+    with OidcIdp(IDP_CLIENT_ID, [IDP_REDIRECT_URI]) as provider:
+        logger.info("oidc idp: %s", provider.issuer)
+        yield provider
+
+
+@pytest.fixture(scope="session")
+def idp_signer(idp, quickstart, ziti_version):
+    """Name of the ext-jwt-signer that trusts ``idp``.
+
+    The controller allows one signer per issuer, so every test shares this one.
+    """
+    # the ``require_ziti`` mark is applied by a fixture that runs after the session ones: skip here as well
+    if ziti_version.major < 2:
+        pytest.skip("JWT signers require Ziti 2.0 or later")
+
+    # sub == email and both tokens are JWTs, so the default claims-property and target-token apply
+    ziti_edge("create", "ext-jwt-signer", IDP_SIGNER, idp.issuer,
+              "--jwks-endpoint", f"{idp.issuer}/keys",
+              "--external-auth-url", idp.issuer,
+              "--client-id", IDP_CLIENT_ID,
+              "--audience", IDP_CLIENT_ID)
+    return IDP_SIGNER
+
+
+@pytest.fixture
+def idp_user(idp, request):
+    """Email of a new ``idp`` user named after the test, so identities of different tests never clash."""
+    email = re.sub(r"\W+", "-", request.node.name).strip("-").lower() + "@example.com"
+    idp.add_user(email, secrets.token_urlsafe(9))
+    return email
