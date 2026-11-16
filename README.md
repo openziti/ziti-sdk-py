@@ -148,6 +148,15 @@ identity = openziti.enroll_with_idp(controller_url, openziti.EnrollMode.TOKEN, '
                                     on_login_url=lambda url: print('log in at', url), timeout=120)
 ```
 
+The same from the command line. `--mode` is `none`, `cert` or `token`; `--idp` is a token or a signer name (a signer
+name prints the url to open and waits for the login):
+
+```shell
+python -m openziti enroll --jwt enrollment-token.jwt --identity identity.json
+python -m openziti enroll --controller "$NETWORK_JWT" --mode token --idp "$TOKEN" --identity identity.json
+python -m openziti enroll --controller https://ctrl.example.com:1280 --mode cert --idp my-signer --identity identity.json
+```
+
 ## Examples
 
 Try it out yourself with one of our [examples](sample%2FREADME.md)
