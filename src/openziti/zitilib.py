@@ -20,6 +20,7 @@ import errno
 import os
 import platform
 import socket
+import time
 from typing import Callable, Optional, Tuple
 
 _mod_path = os.path.dirname(__file__)
@@ -447,6 +448,36 @@ class EnrollMode(enum.IntEnum):
 _ZITI_TIMEOUT = -20
 _EXTERNAL_LOGIN_REQUIRED = -39
 
+# the redirect uri of a login with an external provider is always localhost:20314 (``auth_cb_port`` in ziti-sdk-c)
+_LOGIN_PORT = 20314
+
+
+def _wait_for_login_port_to_free(timeout: float = 3.0) -> None:
+    """Return when nothing listens on the SDK's login port, or after ``timeout`` seconds.
+
+    The listener of a login that was cancelled does not go away at once: its worker notices the cancel up to a
+    second later and closes the socket then (ziti-sdk-c 1.22.1). A login that starts before that binds the same
+    port next to it (the SDK sets SO_REUSEADDR and SO_REUSEPORT), and the redirect of the new login can be handed
+    to the old listener, which drops it: the user's browser gets a refused or reset connection, and the login
+    never completes.
+
+    A connection also wakes the dying listener, so asking whether it is still there makes it go sooner. This is
+    only for a listener of the process's own cancelled enrollment: one login can be pending per machine.
+
+    A refused connection can also mean a listener whose queue is full of these very connections (macOS). The
+    dying listener stops at the first of them, and closes its socket a moment later, long before the next login
+    has a redirect to deliver.
+    """
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        try:
+            socket.create_connection(("::1", _LOGIN_PORT), timeout=0.5).close()
+        except TimeoutError:
+            pass  # a listener that does not take another connection is still there
+        except OSError:
+            return  # refused: nothing listens (or there is no IPv6 loopback, and the SDK has no listener either)
+        time.sleep(0.05)
+
 
 def _identity_json(id_json: ctypes.c_char_p) -> str:
     """The identity json the native library handed out, which the caller has to free."""
@@ -504,7 +535,9 @@ def enroll_with_idp(controller: str, mode: EnrollMode | int, idp: str | None = N
 def _finish_enroll_login(pending: int, on_login_url, timeout) -> str:
     """Hand out the login url of a pending enrollment, wait for the user and get the identity.
 
-    There is one pending enrollment at a time: whatever goes wrong here, it is abandoned, so the next one can start.
+    There is one pending enrollment at a time: whatever goes wrong here, it is abandoned, and the next one can
+    start when this returns. That takes more than ``Ziti_enroll_cancel``, which frees the pending slot at once but
+    leaves the login listener up for as long as a second (see ``_wait_for_login_port_to_free``).
     """
     over = False  # any result of ``Ziti_enroll_continue`` but a timeout releases the handle
     try:
@@ -528,6 +561,7 @@ def _finish_enroll_login(pending: int, on_login_url, timeout) -> str:
     finally:
         if not over:
             _enroll_cancel(pending)
+            _wait_for_login_port_to_free()
 
 
 def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):
