@@ -467,15 +467,19 @@ def _wait_for_login_port_to_free(timeout: float = 3.0) -> None:
     A refused connection can also mean a listener whose queue is full of these very connections (macOS). The
     dying listener stops at the first of them, and closes its socket a moment later, long before the next login
     has a redirect to deliver.
+
+    Each attempt gets all the time that is left, because a closed loopback port is refused slowly on Windows (the
+    stack retries the SYN first): an attempt that gave up sooner would see only silence, and this would go on
+    until ``timeout`` even when nothing listens.
     """
     deadline = time.monotonic() + timeout
-    while time.monotonic() < deadline:
+    while (left := deadline - time.monotonic()) > 0:
         try:
-            socket.create_connection(("::1", _LOGIN_PORT), timeout=0.5).close()
-        except TimeoutError:
-            pass  # a listener that does not take another connection is still there
+            socket.create_connection(("::1", _LOGIN_PORT), timeout=left).close()
         except OSError:
-            return  # refused: nothing listens (or there is no IPv6 loopback, and the SDK has no listener either)
+            # refused: nothing listens (or there is no IPv6 loopback, and the SDK has no listener either).
+            # A timeout is an OSError too, and it is the end of the time to wait: the next login says what is wrong.
+            return
         time.sleep(0.05)
 
 

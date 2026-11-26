@@ -149,7 +149,8 @@ def test_the_wait_returns_when_the_listener_goes(login_port, listener):
     returned = time.monotonic()
 
     assert closed, "returned while the listener was still there"
-    assert returned - closed[0] < 2
+    # well before its own timeout: where a refused connection is slow (Windows) it takes its time, but it comes
+    assert returned - closed[0] < 5
 
 
 def test_the_wait_gives_up_after_its_timeout_when_something_keeps_listening(login_port, listener):
@@ -171,4 +172,29 @@ def test_there_is_nothing_to_wait_for_when_nothing_listens(monkeypatch):
 
     zitilib._wait_for_login_port_to_free(timeout=10)
 
-    assert time.monotonic() - started < 1
+    # well before its own timeout (a refused connection to a closed loopback port is slow on Windows)
+    assert time.monotonic() - started < 5
+
+
+def test_a_slow_refusal_still_counts_as_nothing_listening(monkeypatch):
+    """Windows takes its time to refuse a connection to a closed loopback port (the stack retries the SYN first).
+
+    A connect attempt that gives up sooner than that sees only silence, which is not "nothing listens": the wait
+    would go on until its own timeout. The fake refuses after 0.6 s, and times out a shorter attempt like a socket.
+    """
+    attempts = []
+
+    def create_connection(address, timeout=None):
+        attempts.append(timeout)
+        if timeout is not None and timeout < 0.6:
+            time.sleep(timeout)
+            raise TimeoutError("timed out")
+        time.sleep(0.6)
+        raise ConnectionRefusedError("refused")
+
+    monkeypatch.setattr(zitilib.socket, "create_connection", create_connection)
+    started = time.monotonic()
+
+    zitilib._wait_for_login_port_to_free(timeout=10)
+
+    assert time.monotonic() - started < 5, f"waited for its timeout; the attempts had {attempts} s to connect"
