@@ -103,6 +103,25 @@ class ZitiContext:
         if code != 0:
             raise RuntimeError(f"Failed to login with TOTP: {zitilib.errorstr(code)}")
 
+    def login_with_token(self, token: str) -> None:
+        """
+        Log in with an external token (a JWT) that the app holds already, e.g. the OIDC token of a CI job:
+        there is no signer to select and no browser to open.
+
+        Call it for a context that was loaded with ``EXTERNAL_LOGIN_REQUIRED``, then ``wait_for_auth()``.
+        The call returns when the token is submitted. A token that cannot be used (it cannot be parsed, it is
+        expired) is turned down here and the context keeps waiting for a login. A token that the controller
+        turns down makes ``wait_for_auth()`` fail.
+
+        :param token: external JWT
+        :raises RuntimeError: the token cannot be used
+        """
+        if not isinstance(token, str):
+            raise TypeError("token must be a string")
+        code = zitilib.login_with_token(self._ctx, token)
+        if code != 0:
+            raise RuntimeError(f"Failed to login with token: {zitilib.errorstr(code)}")
+
     def wait_for_auth(self, timeout=60):
         return zitilib.wait_for_auth(self._ctx, timeout)
 

@@ -26,7 +26,9 @@ import pytest
 from semver import Version
 
 import openziti
-from .util import create_identity, create_service, enroll_identity, ziti_edge, ziti_executable
+from . import github_oidc
+from .util import (create_identity, create_service, enroll_identity, fetch_network_jwt, ziti_edge,
+                   ziti_executable)
 
 logger = logging.getLogger(__name__)
 
@@ -222,3 +224,39 @@ def idp_user(idp, request):
     email = re.sub(r"\W+", "-", request.node.name).strip("-").lower() + "@example.com"
     idp.add_user(email, secrets.token_urlsafe(9))
     return email
+
+
+@pytest.fixture
+def enroll_mode(idp_signer):
+    """``enroll_mode("cert" | "token" | "none")`` sets what ``idp_signer`` does for a user without an identity.
+
+    The signer goes back to ``"none"`` (identities must be pre-created) when the test is done.
+    """
+    changed = False
+
+    def set_mode(mode):
+        nonlocal changed
+        assert mode in ("cert", "token", "none")
+        ziti_edge("update", "ext-jwt-signer", idp_signer,
+                  f"--enroll-to-cert={str(mode == 'cert').lower()}",
+                  f"--enroll-to-token={str(mode == 'token').lower()}")
+        changed = True
+
+    yield set_mode
+    if changed:
+        set_mode("none")
+
+
+@pytest.fixture(scope="session")
+def network_jwt(quickstart):
+    """The network JWT of the quickstart controller, which is not publicly trusted: it stands for the controller."""
+    return fetch_network_jwt()
+
+
+@pytest.fixture(scope="session")
+def github_signer(quickstart, ziti_version):
+    """Name of the ext-jwt-signer that trusts GitHub: only for the tests that run in a job with ``id-token: write``."""
+    # the ``require_ziti`` mark is applied by a fixture that runs after the session ones: skip here, like ``idp_signer``
+    if ziti_version.major < 2:
+        pytest.skip("JWT signers require Ziti 2.0 or later")
+    return github_oidc.create_signer()

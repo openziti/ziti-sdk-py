@@ -15,11 +15,13 @@
 # pylint: disable=no-member
 
 import ctypes
+import enum
 import errno
 import os
 import platform
 import socket
-from typing import Optional, Tuple
+import time
+from typing import Callable, Optional, Tuple
 
 _mod_path = os.path.dirname(__file__)
 osname = platform.system().lower()
@@ -175,6 +177,13 @@ _wait_for_auth.argtypes = [
 ]
 _wait_for_auth.restype = ctypes.c_int
 
+_login_with_token = ziti.Ziti_login_with_token
+_login_with_token.argtypes = [
+    ctypes.c_int32,  # ziti context handle
+    ctypes.c_char_p,  # external JWT
+]
+_login_with_token.restype = ctypes.c_int
+
 _ziti_socket = ziti.Ziti_socket
 _ziti_socket.argtypes = [ctypes.c_int]
 _ziti_socket.restype = ctypes.c_int
@@ -218,6 +227,34 @@ _ziti_enroll.argtypes = [
         ctypes.POINTER(ctypes.c_size_t)
 ]
 _ziti_enroll.restype = ctypes.c_int
+
+_enroll_with_idp = ziti.Ziti_enroll_with_idp
+_enroll_with_idp.argtypes = [
+    ctypes.c_char_p,  # controller url or network JWT
+    ctypes.c_int,  # ziti_enroll_mode
+    ctypes.c_char_p,  # token or ext-jwt-signer name, NULL for the first signer
+    ctypes.POINTER(ctypes.c_uint32),  # (output) handle of the enrollment that waits for a login
+    ctypes.POINTER(ctypes.c_char_p),  # (output) identity json
+    ctypes.POINTER(ctypes.c_ulong),  # (output) length of the identity json
+]
+_enroll_with_idp.restype = ctypes.c_int
+
+_enroll_login_url = ziti.Ziti_enroll_login_url
+_enroll_login_url.argtypes = [ctypes.c_uint32]  # handle of the pending enrollment
+_enroll_login_url.restype = ctypes.c_char_p  # belongs to the pending enrollment: not freed
+
+_enroll_continue = ziti.Ziti_enroll_continue
+_enroll_continue.argtypes = [
+    ctypes.c_uint32,  # handle of the pending enrollment
+    ctypes.c_int,  # how long to wait for the login in ms, 0 is for ever
+    ctypes.POINTER(ctypes.c_char_p),  # (output) identity json
+    ctypes.POINTER(ctypes.c_ulong),  # (output) length of the identity json
+]
+_enroll_continue.restype = ctypes.c_int
+
+_enroll_cancel = ziti.Ziti_enroll_cancel
+_enroll_cancel.argtypes = [ctypes.c_uint32]  # handle of the pending enrollment
+_enroll_cancel.restype = ctypes.c_int
 
 _ziti_resolve = ziti.Ziti_resolve
 _ziti_resolve.argtypes = [
@@ -320,6 +357,10 @@ def login_totp(ziti_ctx: int, totp: str) -> int:
     totp_b = bytes(totp, encoding='utf-8')
     return _login_totp(ziti_ctx, totp_b)
 
+def login_with_token(ziti_ctx: int, token: str) -> int:
+    init()
+    return _login_with_token(ziti_ctx, bytes(token, encoding='utf-8'))
+
 def wait_for_auth(ziti_ctx: int, timeout:int) -> int:
     init()
     return _wait_for_auth(ziti_ctx, timeout * 1000)
@@ -392,6 +433,139 @@ def enroll(jwt, key=None, cert=None):
         return id_json.value.decode()
     finally:
         _free(id_json)
+
+
+class EnrollMode(enum.IntEnum):
+    """What the controller does for a token of an ext-jwt-signer (``ziti_enroll_mode``)."""
+    #: the identity exists already: the result is the bootstrap config (controller address and CA, no cert or key)
+    NONE = 0
+    #: the app generates a key and a CSR, the controller signs it for the token: the identity has a cert and key
+    CERT = 1
+    #: the controller creates the identity: it has no cert, and the token is its login
+    TOKEN = 2
+
+
+_ZITI_TIMEOUT = -20
+_EXTERNAL_LOGIN_REQUIRED = -39
+
+# the redirect uri of a login with an external provider is always localhost:20314 (``auth_cb_port`` in ziti-sdk-c)
+_LOGIN_PORT = 20314
+
+
+def _wait_for_login_port_to_free(timeout: float = 3.0) -> None:
+    """Return when nothing listens on the SDK's login port, or after ``timeout`` seconds.
+
+    The listener of a login that was cancelled does not go away at once: its worker notices the cancel up to a
+    second later and closes the socket then (ziti-sdk-c 1.22.1). A login that starts before that binds the same
+    port next to it (the SDK sets SO_REUSEADDR and SO_REUSEPORT), and the redirect of the new login can be handed
+    to the old listener, which drops it: the user's browser gets a refused or reset connection, and the login
+    never completes.
+
+    A connection also wakes the dying listener, so asking whether it is still there makes it go sooner. This is
+    only for a listener of the process's own cancelled enrollment: one login can be pending per machine.
+
+    A refused connection can also mean a listener whose queue is full of these very connections (macOS). The
+    dying listener stops at the first of them, and closes its socket a moment later, long before the next login
+    has a redirect to deliver.
+
+    Each attempt gets all the time that is left, because a closed loopback port is refused slowly on Windows (the
+    stack retries the SYN first): an attempt that gave up sooner would see only silence, and this would go on
+    until ``timeout`` even when nothing listens.
+    """
+    deadline = time.monotonic() + timeout
+    while (left := deadline - time.monotonic()) > 0:
+        try:
+            socket.create_connection(("::1", _LOGIN_PORT), timeout=left).close()
+        except OSError:
+            # refused: nothing listens (or there is no IPv6 loopback, and the SDK has no listener either).
+            # A timeout is an OSError too, and it is the end of the time to wait: the next login says what is wrong.
+            return
+        time.sleep(0.05)
+
+
+def _identity_json(id_json: ctypes.c_char_p) -> str:
+    """The identity json the native library handed out, which the caller has to free."""
+    try:
+        return id_json.value.decode()
+    finally:
+        _free(id_json)
+
+
+def enroll_with_idp(controller: str, mode: EnrollMode | int, idp: str | None = None, *,
+                    on_login_url: Callable[[str], None] | None = None,
+                    timeout: float | None = 300.0) -> str:
+    """
+    Enroll a Ziti identity with an external identity provider (IdP): a controller trusts an ext-jwt-signer and,
+    for a token of the signer, creates the identity (needs controller 2.0 or later).
+
+    :param controller: controller URL, or the network JWT. A URL needs the TLS certificate of the controller
+        to be trusted by the OS; with the network JWT, which is the controller's trust anchor, a controller with
+        a private CA is fine.
+    :param mode: :class:`EnrollMode`. ``NONE`` needs no ``idp`` and returns the bootstrap config.
+    :param idp: a token of the signer (a JWT, e.g. the OIDC token of a CI job), which is handed to the controller
+        as it is, or the name of an ext-jwt-signer to log in with in a browser, or ``None`` to log in with the
+        first signer that offers the mode.
+    :param on_login_url: called with the url that the user has to open, when the enrollment needs a login with a
+        signer. The enrollment then waits for the user to finish the login (the SDK listens for its redirect on
+        a fixed local port, so one login can be pending at a time). Without it, an enrollment that needs a
+        login fails.
+    :param timeout: how long to wait for the login in seconds, ``None`` to wait for ever
+    :return: string containing the Ziti Identity in JSON format. Enrolled to a token, it has no cert or key:
+        load it, and then ``ZitiContext.login_with_token()`` or ``ZitiContext.login_external()``.
+    :raises TimeoutError: the user did not log in within ``timeout``
+    :raises RuntimeError: the enrollment failed, or it needs a login and there is no ``on_login_url``
+    """
+    if not isinstance(controller, str):
+        raise TypeError("controller must be a string")
+    if not controller:
+        raise ValueError("controller must be a controller url or a network JWT")
+    mode = EnrollMode(mode)
+    if idp is not None and not isinstance(idp, str):
+        raise TypeError("idp must be a string or None")
+    init()
+
+    pending = ctypes.c_uint32()
+    id_json = ctypes.c_char_p()
+    id_json_len = ctypes.c_ulong()
+    retcode = _enroll_with_idp(controller.encode(), int(mode), None if idp is None else idp.encode(),
+                               ctypes.byref(pending), ctypes.byref(id_json), ctypes.byref(id_json_len))
+    if retcode == _EXTERNAL_LOGIN_REQUIRED:
+        return _finish_enroll_login(pending.value, on_login_url, timeout)
+    if retcode != 0:
+        raise RuntimeError(errorstr(retcode))
+    return _identity_json(id_json)
+
+
+def _finish_enroll_login(pending: int, on_login_url, timeout) -> str:
+    """Hand out the login url of a pending enrollment, wait for the user and get the identity.
+
+    There is one pending enrollment at a time: whatever goes wrong here, it is abandoned, and the next one can
+    start when this returns. That takes more than ``Ziti_enroll_cancel``, which frees the pending slot at once but
+    leaves the login listener up for as long as a second (see ``_wait_for_login_port_to_free``).
+    """
+    over = False  # any result of ``Ziti_enroll_continue`` but a timeout releases the handle
+    try:
+        if on_login_url is None:
+            raise RuntimeError("the enrollment needs a login in a browser: pass on_login_url to get its url")
+        url = _enroll_login_url(pending)
+        if url is None:
+            raise RuntimeError("the pending enrollment has no login url")
+        on_login_url(url.decode())
+
+        id_json = ctypes.c_char_p()
+        id_json_len = ctypes.c_ulong()
+        wait_ms = 0 if timeout is None else max(1, int(timeout * 1000))  # 0 is for ever
+        retcode = _enroll_continue(pending, wait_ms, ctypes.byref(id_json), ctypes.byref(id_json_len))
+        if retcode == _ZITI_TIMEOUT:
+            raise TimeoutError(f"the login was not completed within {timeout}s")
+        over = True
+        if retcode != 0:
+            raise RuntimeError(errorstr(retcode))
+        return _identity_json(id_json)
+    finally:
+        if not over:
+            _enroll_cancel(pending)
+            _wait_for_login_port_to_free()
 
 
 def getaddrinfo(host, port, family=0, type=0, proto=0, flags=0):

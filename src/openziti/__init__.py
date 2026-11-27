@@ -21,6 +21,8 @@ _ziti_identities = filter(lambda p: p != '',
                               (getenv('ZITI_IDENTITIES') or "").split(';')))
 
 enroll = zitilib.enroll
+enroll_with_idp = zitilib.enroll_with_idp
+EnrollMode = zitilib.EnrollMode
 version = zitilib.version
 shutdown = zitilib.shutdown
 load = context.load_identity

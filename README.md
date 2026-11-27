@@ -115,6 +115,48 @@ when application opens a server socket and binds to address `0.0.0.0:8080` it wi
 Binding addresses can be specified with tuples, strings, or ints(ports). `('0.0.0.0', 8080)`, `'0.0.0.0:8080'`, `':8080'`, `8080` 
 are all considered and treated the same.
 
+### Enrolling an identity
+
+`openziti.enroll()` turns an enrollment token (a JWT file) into an identity.
+
+With controller 2.0 or later an identity can also be enrolled with an external identity provider (OIDC) that the
+controller trusts through an `ext-jwt-signer`. `openziti.enroll_with_idp()` takes the controller (its URL, or its
+network JWT, which is also the trust anchor for a controller with a private CA), an `openziti.EnrollMode`, and a token:
+
+| mode               | the controller...                                    | the identity you get                          |
+|--------------------|------------------------------------------------------|-----------------------------------------------|
+| `EnrollMode.NONE`  | has the identity already                             | the bootstrap config: controller and CA only  |
+| `EnrollMode.CERT`  | signs a certificate request for the token            | has a cert and key, logs in on its own        |
+| `EnrollMode.TOKEN` | creates the identity for the token                   | has no cert: the token is its login           |
+
+An app that already holds a token needs no browser:
+
+```python
+identity = openziti.enroll_with_idp(network_jwt, openziti.EnrollMode.TOKEN, token)
+Path('identity.json').write_text(identity)
+
+ztx, err = openziti.load('identity.json')  # err is ZitiContext.EXTERNAL_LOGIN_REQUIRED: the token is the login
+ztx.login_with_token(token)
+ztx.wait_for_auth()
+```
+
+Without a token, pass the name of the signer (or nothing, for the first signer that offers the mode) and say what to
+do with the login url. The enrollment then waits for the user to log in:
+
+```python
+identity = openziti.enroll_with_idp(controller_url, openziti.EnrollMode.TOKEN, 'my-signer',
+                                    on_login_url=lambda url: print('log in at', url), timeout=120)
+```
+
+The same from the command line. `--mode` is `none`, `cert` or `token`; `--idp` is a token or a signer name (a signer
+name prints the url to open and waits for the login):
+
+```shell
+python -m openziti enroll --jwt enrollment-token.jwt --identity identity.json
+python -m openziti enroll --controller "$NETWORK_JWT" --mode token --idp "$TOKEN" --identity identity.json
+python -m openziti enroll --controller https://ctrl.example.com:1280 --mode cert --idp my-signer --identity identity.json
+```
+
 ## Examples
 
 Try it out yourself with one of our [examples](sample%2FREADME.md)
